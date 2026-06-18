@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# VSCode
+.vscode/
+
+# Environments
+.venv/
+
+# Python
+__pycache__/
+
+# Build
+*.egg-info/

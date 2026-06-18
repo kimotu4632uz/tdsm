@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tdsm"
+dynamic = ["version"]
+description = "A Python library for Tensor-based Dynamical Systems Modeling with the Scikit-learn compatible API "
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    {"name" = "kimotu4632uz", "email" = "32472396+kimotu4632uz@users.noreply.github.com"}
+]
+license = {text = "MIT"}
+dependencies = [
+    "ddsm",
+    "ddsm @ git+https://github.com/kimotu4632uz/ddsm.git@6f5c36a1d481c4d0353185ede86332b2291a11f4",
+    "numpy",
+    "sympy",
+    "scipy",
+    "scikit-learn",
+    "opt-einsum",
+]
+
+[project.urls]
+Homepage = "https://github.com/kimotu4632uz/tdsm"
+Repository = "https://github.com/kimotu4632uz/tdsm.git"
+Issues = "https://github.com/kimotu4632uz/tdsm/issues"
+
+[project.optional-dependencies]
+dev = [
+    "ipykernel",
+    "matplotlib",
+    "seaborn"
+]
+test = []
+
+[tool.setuptools_scm]
+
+[tool.setuptools.packages.find]
+include = ["tdsm"]
+exclude = ["samples"]
+
+[tool.uv]
+package = true

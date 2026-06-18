@@ -1,0 +1,17 @@
+{
+    "image": "mcr.microsoft.com/vscode/devcontainers/python:3.12",
+    "features": {},
+
+    "onCreateCommand": ".devcontainer/setup.sh",
+    "postCreateCommand": "",
+
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-python.python",
+                "ms-toolsai.jupyter"
+            ],
+            "settings": {}
+        }
+    }
+}

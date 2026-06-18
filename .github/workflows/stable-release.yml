@@ -1,0 +1,51 @@
+name: Stable release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag for the stable release (e.g. v0.0.0, if not specified, the latest tag will be used)'
+        required: false
+        type: string
+
+jobs:
+  stable-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Fetch all tags
+        run: git fetch --all --tags
+
+      - name: Check input tag
+        id: check_input_tag
+        run: |
+          if [ -z "${{ github.event.inputs.release_tag }}" ]; then
+            # release_tag=$(gh release list --limit 1 | awk '{print $1}')
+            release_tag=$(gh release list --repo --limit 1 | awk '{print $1}')
+
+          elif git rev-parse "refs/tags/${{ github.event.inputs.release_tag }}" >/dev/null 2>&1; then
+            release_tag="${{ github.event.inputs.release_tag }}"
+
+          else
+            echo "Error: Tag '${{ github.event.inputs.release_tag }}' does not exist."
+            exit 1
+
+          fi
+          echo "release_tag=$release_tag" >> $GITHUB_OUTPUT
+
+      - name: Set stable release
+        run: |
+          gh release edit "${{ steps.check_input_tag.outputs.release_tag }}" --draft=false --prerelease=false --latest
+          git reset --hard "${{ steps.check_input_tag.outputs.release_tag }}"
+          git push -f origin HEAD:main
