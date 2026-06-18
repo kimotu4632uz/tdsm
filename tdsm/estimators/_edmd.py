@@ -44,22 +44,26 @@ class TTEDMD(TDSMBaseEstimator):
         self.K = None
 
 
-    def fit(self, x: np.ndarray, y: np.ndarray) -> Self:
+    def fit(self, X: np.ndarray, y: np.ndarray) -> Self:
         """スナップショット列から TT 形式の Koopman 作用素を推定する。
 
         Args:
-            x: スナップショット列の入力側。shape は ``(dim, n_samples)``。
-            y: スナップショット列の出力側。shape は ``(dim, n_samples)``。
+            X: スナップショット列の入力側。shape は ``(n_samples, n_features)``。
+            y: スナップショット列の出力側。shape は ``(n_samples, n_features)``。
 
         Returns:
             推定済みの自身。
         """
+        # 内部 TT 機構は (n_features, n_samples) 規約なので転置して渡す。
+        x_internal = np.asarray(X).T
+        y_internal = np.asarray(y).T
+
         builder = SVDTTBuilder(
             psi=self.psi,
             threshold_for_svd=self.threshold_for_svd,
         )
-        basis_x, singular_values_x, right_vectors_x = builder.factorize(x)
-        basis_y, singular_values_y, right_vectors_y = builder.factorize(y)
+        basis_x, singular_values_x, right_vectors_x = builder.factorize(x_internal)
+        basis_y, singular_values_y, right_vectors_y = builder.factorize(y_internal)
         if right_vectors_y.shape[1] != right_vectors_x.shape[1]:
             raise ValueError("x and y must have the same number of samples.")
 
@@ -93,19 +97,23 @@ class TTEDMD(TDSMBaseEstimator):
         return self
 
 
-    def predict(self, x: np.ndarray) -> np.ndarray:
+    def predict(self, X: np.ndarray) -> np.ndarray:
         """推定済み TT Koopman 作用素で 1 ステップ先の状態を予測する。
 
         Args:
-            x: 初期状態。形状 ``(dim,)``。
+            X: 初期状態のバッチ。形状 ``(n_samples, n_features)``。
 
         Returns:
-            予測した次時刻の状態ベクトル。
+            予測した次時刻の状態。形状 ``(n_samples, n_features)``。
 
         Raises:
             ValueError: ``fit`` がまだ呼ばれておらず Koopman 作用素が未推定の場合。
         """
-        return self.psi.reconstruct(self.predict_tt(x))
+        samples = np.asarray(X)
+        # 各サンプル(行)を 1 点ずつ予測して積み上げる。
+        return np.stack(
+            [self.psi.reconstruct(self.predict_tt(sample)) for sample in samples]
+        )
 
     def predict_tt(self, x: np.ndarray) -> TTTensor:
         """推定済み TT Koopman 作用素で 1 ステップ先のリフト状態を予測する。
