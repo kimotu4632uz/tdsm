@@ -2,10 +2,9 @@ from collections.abc import Sequence
 from typing import override
 
 import numpy as np
-
 from ddsm.utils.svd import trunc_svd
 
-from ..base._dicts import TensorProductDictionary, TTBuilder
+from ..base._dicts import TensorProductDict, TTBuilder
 from ..tensor import TTChainTensor, TTTensor
 
 
@@ -16,7 +15,7 @@ class SVDTTBuilder(TTBuilder):
 
     def __init__(
         self,
-        psi: TensorProductDictionary,
+        psi: TensorProductDict,
         threshold_for_svd: float | None,
     ) -> None:
         """SVD builder を初期化する。

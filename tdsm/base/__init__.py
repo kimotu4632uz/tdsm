@@ -1,6 +1,6 @@
 from ._dicts import (
-    CoreDictionary,
-    TensorProductDictionary,
+    BaseCoreDict,
+    TensorProductDict,
     TTBuilder,
 )
 from ._estimators import (

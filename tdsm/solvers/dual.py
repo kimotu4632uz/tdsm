@@ -4,12 +4,11 @@ from typing import Literal, Sequence
 
 import numpy as np
 import sympy as sp
-
-from ddsm.solvers.time_grid import TimeGrid
-from ddsm.solvers.model import BaseModel
 from ddsm.solvers.dual import StatsTrajectory
+from ddsm.solvers.model import BaseModel
+from ddsm.solvers.time_grid import TimeGrid
 
-from ..dicts import Monomials4TT, TensorProductDictionary
+from ..dicts import Monomials4TT, TensorProductDict
 from ..tenalg import add_operator, inner_product
 from ..tensor import TTOperator, TTTensor, filled_tensor
 from .ode import CrankNicolson, LinearSolverOptions
@@ -114,7 +113,7 @@ class TTDual:
             初期点で評価した期待値。
         """
 
-        psi = TensorProductDictionary(
+        psi = TensorProductDict(
             self._core_psi,
             ndim=x0.size,
         )

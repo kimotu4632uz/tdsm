@@ -1,4 +1,4 @@
-from abc import ABCMeta, abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from operator import index
 
@@ -8,7 +8,7 @@ from ..tensor._rank_one import RankOneTensor
 from ..tensor._tt_tensor import TTTensor
 
 
-class CoreDictionary(metaclass=ABCMeta):
+class BaseCoreDict(ABC):
     """1 変数入力を特徴ベクトルへ変換する辞書の抽象基底クラス。"""
 
     @property
@@ -60,14 +60,14 @@ class CoreDictionary(metaclass=ABCMeta):
         ...
 
 
-class TensorProductDictionary:
-    """mode ごとの `CoreDictionary` を束ねる積辞書。"""
+class TensorProductDict:
+    """mode ごとの `BaseCoreDict` を束ねる積辞書。"""
 
-    core_dicts: list[CoreDictionary]
+    core_dicts: list[BaseCoreDict]
 
     def __init__(
         self,
-        core_dicts: Sequence[CoreDictionary] | CoreDictionary,
+        core_dicts: Sequence[BaseCoreDict] | BaseCoreDict,
         ndim: int | None = None,
     ) -> None:
         """積辞書を初期化する。
@@ -82,11 +82,11 @@ class TensorProductDictionary:
             TypeError: `CoreDictionary` でない要素を含む場合。
         """
         if ndim is None:
-            if isinstance(core_dicts, CoreDictionary):
+            if isinstance(core_dicts, BaseCoreDict):
                 raise ValueError("ndim must be provided when core_dicts is a single CoreDictionary")
             dictionaries = list(core_dicts)
         else:
-            if not isinstance(core_dicts, CoreDictionary):
+            if not isinstance(core_dicts, BaseCoreDict):
                 raise TypeError("core_dicts must be a CoreDictionary when ndim is provided")
             if isinstance(ndim, bool):
                 raise ValueError("ndim must be a positive integer")
@@ -99,7 +99,7 @@ class TensorProductDictionary:
             dictionaries = [core_dicts for _ in range(dim_int)]
         if len(dictionaries) == 0:
             raise ValueError("core_dicts must contain at least one dictionary")
-        if any(not isinstance(dictionary, CoreDictionary) for dictionary in dictionaries):
+        if any(not isinstance(dictionary, BaseCoreDict) for dictionary in dictionaries):
             raise TypeError("core_dicts must contain only CoreDictionary instances")
         self.core_dicts = dictionaries
 
@@ -200,14 +200,14 @@ class TensorProductDictionary:
         return np.asarray(values)
 
 
-class TTBuilder(metaclass=ABCMeta):
+class TTBuilder(ABC):
     """積辞書から TT 特徴を構築する基底クラス。"""
 
-    psi: TensorProductDictionary
+    psi: TensorProductDict
 
     def __init__(
         self,
-        psi: TensorProductDictionary,
+        psi: TensorProductDict,
     ) -> None:
         """builder を初期化する。
 

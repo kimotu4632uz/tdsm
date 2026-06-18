@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import abc
+from abc import ABC, abstractmethod
 from typing import Any
 
 import numpy as np
 from sklearn.base import BaseEstimator, RegressorMixin
 
 
-class TDSMBaseEstimator(abc.ABC, RegressorMixin, BaseEstimator):
+class TDSMBaseEstimator(ABC, RegressorMixin, BaseEstimator):
     """
     Abstract base estimator for Data-Driven Sparse Modeling (DDSM).
     """
@@ -16,7 +16,7 @@ class TDSMBaseEstimator(abc.ABC, RegressorMixin, BaseEstimator):
         """Initialize the TDBaseEstimator instance."""
         super(TDSMBaseEstimator, self).__init__()
 
-    @abc.abstractmethod
+    @abstractmethod
     def fit(self, X: np.ndarray, y: np.ndarray) -> TDSMBaseEstimator:
         """
         Fit the model according to the given training data.
@@ -30,12 +30,12 @@ class TDSMBaseEstimator(abc.ABC, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        DDSMBaseEstimator
+        TDSMBaseEstimator
             The fitted estimator.
         """
         pass
 
-    @abc.abstractmethod
+    @abstractmethod
     def predict(self, X: np.ndarray) -> np.ndarray:
         """
         Predict regression targets for X.

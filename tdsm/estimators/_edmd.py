@@ -6,7 +6,7 @@ import numpy as np
 from ddsm.utils.svd import truncated_pinv_values
 
 from ..base import TDSMBaseEstimator
-from ..dicts import SVDTTBuilder, TensorProductDictionary
+from ..dicts import SVDTTBuilder, TensorProductDict
 from ..tensor import TTChainTensor, TTTensor
 from ._koopman_tt import TTKoopmanOperator
 
@@ -18,7 +18,7 @@ class TTEDMD(TDSMBaseEstimator):
     `TTKoopmanOperator` として推定し、学習済み作用素を用いて予測します。
     """
 
-    psi: TensorProductDictionary
+    psi: TensorProductDict
     threshold_for_svd: float | None
     threshold_for_pinv: float | None
     K: TTKoopmanOperator | None
@@ -26,7 +26,7 @@ class TTEDMD(TDSMBaseEstimator):
     def __init__(
         self,
         *,
-        psi: TensorProductDictionary,
+        psi: TensorProductDict,
         threshold_for_svd: float | None,
         threshold_for_pinv: float | None = 1.0e-3,
     ) -> None:

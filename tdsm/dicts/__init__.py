@@ -1,5 +1,5 @@
 from ..base._dicts import (
-    TensorProductDictionary,
+    TensorProductDict,
 )
 from ._builder import (
     SVDTTBuilder,

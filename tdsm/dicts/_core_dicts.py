@@ -5,10 +5,10 @@ from typing import override
 
 import numpy as np
 
-from ..base._dicts import CoreDictionary
+from ..base._dicts import BaseCoreDict
 
 
-class Monomials4TT(CoreDictionary):
+class Monomials4TT(BaseCoreDict):
     """TT 用の単項式辞書。"""
 
     degree: int
