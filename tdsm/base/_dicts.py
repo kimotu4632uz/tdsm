@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 from operator import index
+from typing import Self
 
 import numpy as np
+from sklearn.utils.validation import check_array
 
 from ..tensor._rank_one import RankOneTensor
 from ..tensor._tt_tensor import TTTensor
@@ -11,9 +13,8 @@ from ..tensor._tt_tensor import TTTensor
 class BaseCoreDict(ABC):
     """1 変数入力を特徴ベクトルへ変換する辞書の抽象基底クラス。"""
 
-    @property
     @abstractmethod
-    def output_dim(self) -> int:
+    def __len__(self) -> int:
         """出力特徴ベクトルの次元を返す。"""
         ...
 
@@ -43,7 +44,7 @@ class BaseCoreDict(ABC):
             x_1d: 形状 ``(n_samples,)`` の 1 次元サンプル列。
 
         Returns:
-            形状 ``(output_dim, n_samples)`` の特徴行列。
+            形状 ``(n_samples, output_dim)`` の特徴行列。
         """
         ...
 
@@ -63,7 +64,8 @@ class BaseCoreDict(ABC):
 class TensorProductDict:
     """mode ごとの `BaseCoreDict` を束ねる積辞書。"""
 
-    core_dicts: list[BaseCoreDict]
+    core_dicts: list[BaseCoreDict] | None
+    _template: BaseCoreDict | None
 
     def __init__(
         self,
@@ -74,16 +76,22 @@ class TensorProductDict:
 
         Args:
             core_dicts: 各 mode に対応する core dictionary の列。
-                `ndim` を指定した場合は、全 mode に使う単一の core dictionary。
-            ndim: 単一の core dictionary を複製する mode 数。
+                単一の core dictionary を渡した場合は全 mode で同じ辞書を使う。
+            ndim: 単一の core dictionary を複製する mode 数。単一辞書を渡し
+                `ndim` を省略した場合は遅延テンプレートとなり、mode 数は
+                `fit` 時にデータの特徴次元から決まる。
 
         Raises:
             ValueError: 辞書列が空の場合。
-            TypeError: `CoreDictionary` でない要素を含む場合。
+            TypeError: `BaseCoreDict` でない要素を含む場合。
         """
         if ndim is None:
             if isinstance(core_dicts, BaseCoreDict):
-                raise ValueError("ndim must be provided when core_dicts is a single CoreDictionary")
+                # 遅延テンプレート: mode 数は fit() でデータ次元から決める。
+                self._template = core_dicts
+                self.core_dicts = None
+                return
+            self._template = None
             dictionaries = list(core_dicts)
         else:
             if not isinstance(core_dicts, BaseCoreDict):
@@ -96,6 +104,7 @@ class TensorProductDict:
                 raise TypeError("ndim must be an integer") from exc
             if dim_int <= 0:
                 raise ValueError("ndim must be a positive integer")
+            self._template = core_dicts
             dictionaries = [core_dicts for _ in range(dim_int)]
         if len(dictionaries) == 0:
             raise ValueError("core_dicts must contain at least one dictionary")
@@ -103,15 +112,50 @@ class TensorProductDict:
             raise TypeError("core_dicts must contain only CoreDictionary instances")
         self.core_dicts = dictionaries
 
+    def _require_fitted(self) -> list[BaseCoreDict]:
+        """確定済みの core dictionary 列を返す。未確定なら例外を送出する。"""
+        if self.core_dicts is None:
+            raise ValueError(
+                "TensorProductDict is a deferred template; call fit() to fix its modes."
+            )
+        return self.core_dicts
+
+    def fit(self, X: np.ndarray, **kwargs) -> Self:
+        """データの特徴次元に合わせて積辞書の mode 構成を確定する。
+
+        Args:
+            X: 形状 ``(n_samples, n_features)`` の学習データ。
+            **kwargs: 追加のハイパーパラメータ(未使用)。
+
+        Returns:
+            確定済みの自身。
+
+        Raises:
+            ValueError: 入力が不正、または確定済み(mode 数固定)の辞書で
+                特徴次元が一致しない場合。
+        """
+        X = check_array(X)
+        n_features = X.shape[1]
+        if self.core_dicts is None:
+            # 遅延テンプレート: データ次元に合わせて mode を構成する。
+            assert self._template is not None
+            self.core_dicts = [self._template for _ in range(n_features)]
+        elif len(self.core_dicts) != n_features:
+            raise ValueError(
+                f"TensorProductDict has {len(self.core_dicts)} modes "
+                f"but X has {n_features} features."
+            )
+        return self
+
     @property
     def ndim(self) -> int:
         """mode 数を返す。"""
-        return len(self.core_dicts)
+        return len(self._require_fitted())
 
     @property
     def mode_dims(self) -> tuple[int, ...]:
         """各 mode の特徴次元を返す。"""
-        return tuple(dictionary.output_dim for dictionary in self.core_dicts)
+        return tuple(len(dictionary) for dictionary in self._require_fitted())
 
     def lift_point(self, x: np.ndarray) -> RankOneTensor:
         """1 点の状態を rank-1 TT tensor へ変換する。
@@ -125,12 +169,13 @@ class TensorProductDict:
         Raises:
             ValueError: 入力長が辞書数と一致しない場合。
         """
-        values = np.asarray(x).reshape(-1)
+        core_dicts = self._require_fitted()
+        values = check_array(x, ensure_2d=False).reshape(-1)
         if values.size != self.ndim:
             raise ValueError("The number of state entries must match the number of core dictionaries.")
         factors = [
             np.asarray(dictionary.lift_point(value)).reshape(-1)
-            for dictionary, value in zip(self.core_dicts, values, strict=True)
+            for dictionary, value in zip(core_dicts, values, strict=True)
         ]
         dtype = np.dtype(np.result_type(*[factor.dtype for factor in factors]))
         return RankOneTensor(factors, dtype=dtype)
@@ -139,24 +184,22 @@ class TensorProductDict:
         """バッチデータを mode ごとの特徴行列列へ変換する。
 
         Args:
-            x: 形状 ``(ndim, n_samples)`` のデータ行列。
+            x: 形状 ``(n_samples, n_features)`` のデータ行列。
 
         Returns:
-            各 mode ごとに形状 ``(feature_dim_d, n_samples)`` を持つ配列列。
+            各 mode ごとに形状 ``(n_samples, feature_dim_d)`` を持つ配列列。
 
         Raises:
             ValueError: 入力 shape が不正な場合。
         """
-        data = np.asarray(x)
-        if data.ndim != 2:
-            raise ValueError("x must be a 2D array")
-        if data.shape[0] == 0 or data.shape[1] == 0:
-            raise ValueError("x must contain at least one mode and one sample")
-        if data.shape[0] != self.ndim:
-            raise ValueError("The number of rows must match the number of core dictionaries.")
+        core_dicts = self._require_fitted()
+        data = check_array(x)
+        if data.shape[1] != self.ndim:
+            raise ValueError("The number of features must match the number of core dictionaries.")
+        # SVD 機構が「サンプル=列」を前提とするため、ここで各 mode 列を取り出す。
         return [
-            dictionary.lift_batch(data[mode_index, :])
-            for mode_index, dictionary in enumerate(self.core_dicts)
+            dictionary.lift_batch(data[:, mode_index])
+            for mode_index, dictionary in enumerate(core_dicts)
         ]
 
     def reconstruct(self, tt: TTTensor) -> np.ndarray:
@@ -175,25 +218,26 @@ class TensorProductDict:
         Raises:
             ValueError: TT の mode 数または mode 次元が辞書と一致しない場合。
         """
+        core_dicts = self._require_fitted()
         if tt.ndim != self.ndim:
             raise ValueError("tt must have the same number of modes as the dictionary.")
         if tt.mode_dims != self.mode_dims:
             raise ValueError("tt mode dimensions must match the dictionary.")
 
-        constant_indices = [dictionary.constant_index for dictionary in self.core_dicts]
+        constant_indices = [dictionary.constant_index for dictionary in core_dicts]
         for mode_index, (constant_index, dictionary) in enumerate(
-            zip(constant_indices, self.core_dicts, strict=True)
+            zip(constant_indices, core_dicts, strict=True)
         ):
-            if constant_index < 0 or constant_index >= dictionary.output_dim:
+            if constant_index < 0 or constant_index >= len(dictionary):
                 raise ValueError(f"constant_index for mode {mode_index} is out of bounds.")
 
         values: list[np.generic] = []
-        for mode_index, dictionary in enumerate(self.core_dicts):
+        for mode_index, dictionary in enumerate(core_dicts):
             # features_j[k] = TT[constant_index_0, ..., k, ..., constant_index_d]
             # という特徴ベクトルを作り、reconstruct して状態値を得る
-            features = np.empty(dictionary.output_dim, dtype=tt.dtype)
+            features = np.empty(len(dictionary), dtype=tt.dtype)
             state_indices = list(constant_indices)
-            for feature_index in range(dictionary.output_dim):
+            for feature_index in range(len(dictionary)):
                 state_indices[mode_index] = feature_index
                 features[feature_index] = tt.get_element(state_indices)
             values.append(dictionary.reconstruct(features))
@@ -220,22 +264,24 @@ class TTBuilder(ABC):
         """1 点の状態を rank-1 TT tensor へ変換する。
 
         Args:
-            x: 形状 ``(dim,)`` の状態ベクトル。
+            x: 形状 ``(n_features,)`` の状態ベクトル。
 
         Returns:
             lift 後の `RankOneTensor`。
         """
+        x = check_array(x, ensure_2d=False)
         return self.psi.lift_point(x)
 
     def lift_batch(self, x: np.ndarray) -> TTTensor:
         """バッチデータを `TTTensor` へ変換する。
 
         Args:
-            x: 形状 ``(dim, n_samples)`` のデータ行列。
+            x: 形状 ``(n_samples, n_features)`` のデータ行列。
 
         Returns:
             sample mode を含む `TTTensor`。
         """
+        x = check_array(x)
         return self._build_from_core_features(self.psi._lift_cores_batch(x))
 
     @abstractmethod
@@ -249,3 +295,17 @@ class TTBuilder(ABC):
             構築した `TTTensor`。
         """
         ...
+
+    def fit(self, X: np.ndarray, **kwargs) -> Self:
+        """積辞書をデータに合わせて確定する。
+
+        Args:
+            X: 形状 ``(n_samples, n_features)`` の学習データ。
+            **kwargs: 追加のハイパーパラメータ(`psi.fit` へ転送)。
+
+        Returns:
+            確定済みの自身。
+        """
+        X = check_array(X)
+        self.psi.fit(X, **kwargs)
+        return self

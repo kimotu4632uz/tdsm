@@ -3,6 +3,7 @@ from typing import override
 
 import numpy as np
 from ddsm.utils.svd import trunc_svd
+from sklearn.utils.validation import check_array
 
 from ..base._dicts import TensorProductDict, TTBuilder
 from ..tensor import TTChainTensor, TTTensor
@@ -46,11 +47,12 @@ class SVDTTBuilder(TTBuilder):
         """バッチデータを TT 基底と右側行列へ分解する。
 
         Args:
-            x: 形状 ``(dim, n_samples)`` のデータ行列。
+            x: 形状 ``(n_samples, n_features)`` のデータ行列。
 
         Returns:
             ``(TT 基底, 特異値, 右特異ベクトル行列)``。
         """
+        x = check_array(x)
         return self._factorize_from_core_features(self.psi._lift_cores_batch(x))
 
     def _factorize_from_core_features(
@@ -60,7 +62,7 @@ class SVDTTBuilder(TTBuilder):
         """辞書評価済み特徴を TT 基底と右側行列へ分解する。
 
         Args:
-            core_features: 各 mode ごとに形状 ``(feature_dim, n_samples)`` を持つ配列列。
+            core_features: 各 mode ごとに形状 ``(n_samples, feature_dim)`` を持つ配列列。
 
         Returns:
             ``(TT 基底, 特異値, 右特異ベクトル行列)``。
@@ -71,22 +73,25 @@ class SVDTTBuilder(TTBuilder):
         if len(core_features) == 0:
             raise ValueError("core_features must contain at least one mode")
 
-        num_data = core_features[0].shape[1]
+        num_data = core_features[0].shape[0]
         for mode_index, features in enumerate(core_features):
             if features.ndim != 2:
                 raise ValueError(f"core_features[{mode_index}] must be 2-dimensional")
             if features.shape[0] == 0 or features.shape[1] == 0:
                 raise ValueError(f"core_features[{mode_index}] must be non-empty")
-            if features.shape[1] != num_data:
+            if features.shape[0] != num_data:
                 raise ValueError("All core_features must share the same number of samples")
+
+        # SVD スイープは「サンプル=列」を前提とするため (feature_dim, n_samples) に転置する。
+        mode_features = [np.asarray(features).T for features in core_features]
 
         cores: list[np.ndarray] = [np.empty(0)] * len(core_features)
 
-        residual = np.ones((1, num_data), dtype=core_features[0].dtype)
-        singular_values = np.empty(0, dtype=core_features[0].dtype)
-        right_vectors = np.empty((0, num_data), dtype=core_features[0].dtype)
+        residual = np.ones((1, num_data), dtype=mode_features[0].dtype)
+        singular_values = np.empty(0, dtype=mode_features[0].dtype)
+        right_vectors = np.empty((0, num_data), dtype=mode_features[0].dtype)
 
-        for mode_index, features in enumerate(core_features):
+        for mode_index, features in enumerate(mode_features):
             core_tmp = residual[:, None, :] * features[None, :, :]
             reshaped = core_tmp.reshape(core_tmp.shape[0] * core_tmp.shape[1], core_tmp.shape[2])
             u, singular_values, right_vectors = trunc_svd(

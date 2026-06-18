@@ -4,6 +4,7 @@ from operator import index
 from typing import override
 
 import numpy as np
+from sklearn.utils.validation import check_array
 
 from ..base._dicts import BaseCoreDict
 
@@ -23,8 +24,8 @@ class Monomials4TT(BaseCoreDict):
         self.degree = degree
         self._degree_list = np.arange(self.degree + 1)
 
-    @property
-    def output_dim(self) -> int:
+    @override
+    def __len__(self) -> int:
         """特徴ベクトルの次元を返す。"""
         return int(self._degree_list.size)
 
@@ -77,15 +78,13 @@ class Monomials4TT(BaseCoreDict):
             x_1d: 形状 ``(n_samples,)`` の 1 次元サンプル列。
 
         Returns:
-            形状 ``(degree + 1, n_samples)`` の特徴行列。
+            形状 ``(n_samples, degree + 1)`` の特徴行列。
 
         Raises:
             ValueError: 入力が空の場合。
         """
-        values = np.asarray(x_1d).reshape(-1)
-        if values.size == 0:
-            raise ValueError("x_1d must contain at least one sample")
-        return np.power(values[np.newaxis, :], self._degree_list[:, np.newaxis])
+        values = check_array(x_1d, ensure_2d=False).reshape(-1)
+        return np.power(values[:, np.newaxis], self._degree_list[np.newaxis, :])
 
     @override
     def reconstruct(self, features: np.ndarray) -> np.generic:
@@ -102,7 +101,7 @@ class Monomials4TT(BaseCoreDict):
         """
         if self.degree < 1:
             raise ValueError("first-order terms are not available when degree < 1")
-        values = np.asarray(features).reshape(-1)
-        if values.size != self.output_dim:
-            raise ValueError("features must have length output_dim")
+        values = check_array(features, ensure_2d=False).reshape(-1)
+        if values.size != len(self):
+            raise ValueError("features must have length len(self)")
         return values[1]

@@ -1,12 +1,13 @@
 """TT-EDMD による Koopman 作用素の推定器を提供する。"""
 
-from typing import Self
+from typing import Any, Self
 
 import numpy as np
 from ddsm.utils.svd import truncated_pinv_values
+from sklearn.utils.validation import check_is_fitted, validate_data
 
 from ..base import TDSMBaseEstimator
-from ..dicts import SVDTTBuilder, TensorProductDict
+from ..dicts import Monomials4TT, SVDTTBuilder, TensorProductDict
 from ..tensor import TTChainTensor, TTTensor
 from ._koopman_tt import TTKoopmanOperator
 
@@ -16,56 +17,103 @@ class TTEDMD(TDSMBaseEstimator):
 
     スナップショット対から lifted observable 空間上の Koopman 作用素を
     `TTKoopmanOperator` として推定し、学習済み作用素を用いて予測します。
+    入力側 ``X`` と出力側 ``y`` で別々の積辞書を使えます。
     """
 
-    psi: TensorProductDict
+    psix_cls: type[TensorProductDict]
+    psix_kwargs: dict[str, Any] | None
+    psiy_cls: type[TensorProductDict]
+    psiy_kwargs: dict[str, Any] | None
     threshold_for_svd: float | None
     threshold_for_pinv: float | None
-    K: TTKoopmanOperator | None
+    psix_: TensorProductDict
+    psiy_: TensorProductDict
+    K_: TTKoopmanOperator
 
     def __init__(
         self,
-        *,
-        psi: TensorProductDict,
-        threshold_for_svd: float | None,
+        psix_cls: type[TensorProductDict] = TensorProductDict,
+        psix_kwargs: dict[str, Any] | None = None,
+        psiy_cls: type[TensorProductDict] = TensorProductDict,
+        psiy_kwargs: dict[str, Any] | None = None,
+        threshold_for_svd: float | None = None,
         threshold_for_pinv: float | None = 1.0e-3,
     ) -> None:
         """TTEDMD 推定器を初期化する。
 
         Args:
-            psi: 各状態成分へ適用する core dictionary。
+            psix_cls: 入力側 ``X`` を lift する積辞書クラス。`fit` 時に
+                ``psix_cls(**psix_kwargs)`` で構築する。
+            psix_kwargs: ``psix_cls`` へ渡すキーワード引数。``core_dicts`` に単一の
+                core dictionary を渡し ``ndim`` を省略すると、mode 数は `fit` 時に
+                ``X`` の特徴次元へ合わせる(遅延テンプレート)。``None`` の場合は
+                ``{"core_dicts": Monomials4TT(degree=2)}`` を使う。
+            psiy_cls: 出力側 ``y`` を lift する積辞書クラス。
+            psiy_kwargs: ``psiy_cls`` へ渡すキーワード引数。``None`` の場合は
+                ``psix_kwargs`` と同じ既定値を使う。
             threshold_for_svd: lifted 行列の SVD 打ち切り閾値。
             threshold_for_pinv: 擬似逆で無視する特異値の閾値。``None`` の場合は
                 0 でない特異値をすべて使う。
         """
-        self.psi = psi
+        super().__init__()
+        self.psix_cls = psix_cls
+        self.psix_kwargs = psix_kwargs
+        self.psiy_cls = psiy_cls
+        self.psiy_kwargs = psiy_kwargs
         self.threshold_for_svd = threshold_for_svd
         self.threshold_for_pinv = threshold_for_pinv
-        self.K = None
 
+    def _build_psi(
+        self,
+        psi_cls: type[TensorProductDict],
+        psi_kwargs: dict[str, Any] | None,
+    ) -> TensorProductDict:
+        """ハイパーパラメータから積辞書を構築する。
+
+        ``psi_kwargs`` が ``None`` の場合は ``Monomials4TT(degree=2)`` の
+        遅延テンプレートを使う。
+        """
+        kwargs = (
+            psi_kwargs
+            if psi_kwargs is not None
+            else {"core_dicts": Monomials4TT(degree=2)}
+        )
+        return psi_cls(**kwargs)
 
     def fit(self, X: np.ndarray, y: np.ndarray) -> Self:
         """スナップショット列から TT 形式の Koopman 作用素を推定する。
 
         Args:
             X: スナップショット列の入力側。shape は ``(n_samples, n_features)``。
-            y: スナップショット列の出力側。shape は ``(n_samples, n_features)``。
+            y: スナップショット列の出力側。shape は ``(n_samples, n_features)`` か
+                ``(n_samples,)``。
 
         Returns:
             推定済みの自身。
         """
-        # 内部 TT 機構は (n_features, n_samples) 規約なので転置して渡す。
-        x_internal = np.asarray(X).T
-        y_internal = np.asarray(y).T
+        X, y = validate_data(self, X, y, reset=True, multi_output=True)
+        self._y_ndim_1d = y.ndim == 1
+        if self._y_ndim_1d:
+            y = y[:, np.newaxis]
 
-        builder = SVDTTBuilder(
-            psi=self.psi,
+        # 入力側 X と出力側 y で別々の積辞書を構築し、それぞれを fit する。
+        self.psix_ = self._build_psi(self.psix_cls, self.psix_kwargs)
+        self.psiy_ = self._build_psi(self.psiy_cls, self.psiy_kwargs)
+        builder_x = SVDTTBuilder(
+            psi=self.psix_,
             threshold_for_svd=self.threshold_for_svd,
         )
-        basis_x, singular_values_x, right_vectors_x = builder.factorize(x_internal)
-        basis_y, singular_values_y, right_vectors_y = builder.factorize(y_internal)
+        builder_y = SVDTTBuilder(
+            psi=self.psiy_,
+            threshold_for_svd=self.threshold_for_svd,
+        )
+        builder_x.fit(X)  # psix_.fit(X): mode 数の確定/検証
+        builder_y.fit(y)  # psiy_.fit(y): mode 数の確定/検証
+
+        basis_x, singular_values_x, right_vectors_x = builder_x.factorize(X)
+        basis_y, singular_values_y, right_vectors_y = builder_y.factorize(y)
         if right_vectors_y.shape[1] != right_vectors_x.shape[1]:
-            raise ValueError("x and y must have the same number of samples.")
+            raise ValueError("X and y must have the same number of samples.")
 
         cross = right_vectors_y @ right_vectors_x.T
 
@@ -90,12 +138,11 @@ class TTEDMD(TDSMBaseEstimator):
             *basis_y.cores[:-1],
             basis_y.cores[-1].apply_right_factor(middle),
         ])
-        self.K = TTKoopmanOperator(
+        self.K_ = TTKoopmanOperator(
             left_chain=left_chain,
             right_chain=basis_x,
         )
         return self
-
 
     def predict(self, X: np.ndarray) -> np.ndarray:
         """推定済み TT Koopman 作用素で 1 ステップ先の状態を予測する。
@@ -104,29 +151,27 @@ class TTEDMD(TDSMBaseEstimator):
             X: 初期状態のバッチ。形状 ``(n_samples, n_features)``。
 
         Returns:
-            予測した次時刻の状態。形状 ``(n_samples, n_features)``。
-
-        Raises:
-            ValueError: ``fit`` がまだ呼ばれておらず Koopman 作用素が未推定の場合。
+            予測した次時刻の状態。形状 ``(n_samples, n_targets)``。`fit` 時の
+            ``y`` が 1 次元だった場合は ``(n_samples,)``。
         """
-        samples = np.asarray(X)
-        # 各サンプル(行)を 1 点ずつ予測して積み上げる。
-        return np.stack(
-            [self.psi.reconstruct(self.predict_tt(sample)) for sample in samples]
+        check_is_fitted(self, "K_")
+        X = validate_data(self, X, reset=False)
+        # 各サンプル(行)を 1 点ずつ予測して積み上げる。出力は psiy_ 空間で復元する。
+        predictions = np.stack(
+            [self.psiy_.reconstruct(self.predict_tt(sample)) for sample in X]
         )
+        if self._y_ndim_1d:
+            return predictions[:, 0]
+        return predictions
 
     def predict_tt(self, x: np.ndarray) -> TTTensor:
         """推定済み TT Koopman 作用素で 1 ステップ先のリフト状態を予測する。
 
         Args:
-            x: 初期状態。形状 ``(dim,)``。
+            x: 初期状態。形状 ``(n_features,)``。
 
         Returns:
-            予測したリフト状態の `TTTensor`。
-
-        Raises:
-            ValueError: ``fit`` がまだ呼ばれておらず Koopman 作用素が未推定の場合。
+            予測したリフト状態の `TTTensor`(出力側 ``psiy_`` 空間)。
         """
-        if self.K is None:
-            raise ValueError("TTEDMD: K is not computed yet. Call fit() first.")
-        return self.K.apply_rank_one(self.psi.lift_point(x))
+        check_is_fitted(self, "K_")
+        return self.K_.apply_rank_one(self.psix_.lift_point(x))
