@@ -182,17 +182,26 @@ def inner_product(
     少なくとも一方が open boundary の場合は境界 rank を残した配列を返し、
     両方が閉境界の場合は scalar を返します。
 
-    Args:
-        left: 左側の tensor。
-        right: 右側の tensor。
-        dtype: 内部計算に使う dtype。省略時は入力から推定します。
+    Parameters
+    ----------
+    left : BaseTTTensor or RankOneTensor
+        左側の tensor。
+    right : BaseTTTensor or RankOneTensor
+        右側の tensor。
+    dtype : np.dtype or None, optional
+        内部計算に使う dtype。省略時は入力から推定します。
 
-    Returns:
+    Returns
+    -------
+    np.ndarray or np.generic
         open boundary を含む場合は内積配列、閉境界同士の場合は内積 scalar。
 
-    Raises:
-        TypeError: 入力が TT tensor または rank-1 tensor でない場合。
-        ValueError: mode 次元が一致しない場合。
+    Raises
+    ------
+    TypeError
+        入力が TT tensor または rank-1 tensor でない場合。
+    ValueError
+        mode 次元が一致しない場合。
     """
     if not isinstance(left, (BaseTTTensor, RankOneTensor)) or not isinstance(
         right,

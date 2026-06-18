@@ -57,7 +57,9 @@ class BaseTTTensor(BaseTT):
     def to_dense_chain(self) -> np.ndarray:
         """境界 rank を残した dense tensor を返す。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             形状 ``(r0, n1, ..., nd, rd)`` の dense tensor。
         """
         tensor = self.cores[0].as_array().copy()
@@ -73,12 +75,18 @@ class BaseTTTensor(BaseTT):
     ) -> np.ndarray:
         """指定 core 順序で左から右に縮約して行列化する。
 
-        Args:
-            cores: 縮約する TT core の列。
-            mode_dims: ``cores`` に対応する mode 次元。
-            ranks: ``cores`` に対応する TT rank。
+        Parameters
+        ----------
+        cores : Sequence[BaseTTCore]
+            縮約する TT core の列。
+        mode_dims : Sequence[int]
+            ``cores`` に対応する mode 次元。
+        ranks : Sequence[int]
+            ``cores`` に対応する TT rank。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             左境界 rank と mode index を行方向にまとめ、右境界 rank を
             列方向に残した 2 次元配列。
         """
@@ -133,12 +141,18 @@ class BaseTTTensor(BaseTT):
     ) -> tuple[Self, np.ndarray, np.ndarray]:
         """TT tensor 全体を左直交 TT と末尾の SVD 因子へ分解する。
 
-        Args:
-            threshold: 相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
-            max_rank: 各中間 rank の最大値。
-            rank_list: core ごとの rank 上限。
+        Parameters
+        ----------
+        threshold : float or None, default 0
+            相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
+        max_rank : int or None, optional
+            各中間 rank の最大値。
+        rank_list : list[int] or None, optional
+            core ごとの rank 上限。
 
-        Returns:
+        Returns
+        -------
+        tuple[Self, np.ndarray, np.ndarray]
             ``(左直交化した TT tensor, 特異値, 右特異ベクトル行列)``。
         """
         ortho = self.left_ortho(threshold=threshold, max_rank=max_rank, rank_list=rank_list)
@@ -158,7 +172,9 @@ class BaseTTTensor(BaseTT):
     def left_qr(self) -> tuple[Self, np.ndarray]:
         """TT tensor 全体を左直交 TT と右端の QR 因子へ分解する。
 
-        Returns:
+        Returns
+        -------
+        tuple[Self, np.ndarray]
             ``(左直交化した TT tensor, R 行列)``。
         """
         ortho = self.left_ortho(method='qr')
@@ -188,7 +204,9 @@ class TTChainTensor(BaseTTTensor):
     def as_operator_rows(self) -> TTChainOperator:
         """各 mode を row 側に置いた TT operator chain に変換する。
 
-        Returns:
+        Returns
+        -------
+        TTChainOperator
             row 次元が ``mode_dims``、column 次元がすべて 1 の operator chain。
         """
         return TTChainOperator([core.as_operator_row_core() for core in self.cores])
@@ -196,7 +214,9 @@ class TTChainTensor(BaseTTTensor):
     def as_operator_cols(self) -> TTChainOperator:
         """各 mode を column 側に置いた TT operator chain に変換する。
 
-        Returns:
+        Returns
+        -------
+        TTChainOperator
             row 次元がすべて 1、column 次元が ``mode_dims`` の operator chain。
         """
         return TTChainOperator([core.as_operator_col_core() for core in self.cores])
@@ -204,7 +224,9 @@ class TTChainTensor(BaseTTTensor):
     def vectorize_l2r(self) -> np.ndarray:
         """左から右に縮約して境界 rank 付き dense 行列に変換する。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             mode index を ``(i1, ..., id)`` の順に並べた、形状
             ``(r0 * prod(mode_dims), rd)`` の 2 次元配列。
         """
@@ -213,7 +235,9 @@ class TTChainTensor(BaseTTTensor):
     def vectorize_r2l(self) -> np.ndarray:
         """右から左の mode 順で境界 rank 付き dense 行列に変換する。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             mode index を ``(id, ..., i1)`` の順に並べた、形状
             ``(r0 * prod(mode_dims), rd)`` の 2 次元配列。
         """
@@ -233,12 +257,17 @@ class TTTensor(BaseTTTensor):
     def __init__(self, cores: Sequence[np.ndarray | BaseTTCore], copy: bool = True) -> None:
         """TT tensor を初期化する。
 
-        Args:
-            cores: 3 次元 TT core の列。
-            copy: True の場合、core をコピーして保持する。
+        Parameters
+        ----------
+        cores : Sequence[np.ndarray | BaseTTCore]
+            3 次元 TT core の列。
+        copy : bool, default True
+            True の場合、core をコピーして保持する。
 
-        Raises:
-            ValueError: 境界 rank が 1 でない場合。
+        Raises
+        ------
+        ValueError
+            境界 rank が 1 でない場合。
         """
         super().__init__(cores, copy=copy)
         if self.ranks[0] != 1 or self.ranks[-1] != 1:
@@ -256,7 +285,9 @@ class TTTensor(BaseTTTensor):
     def as_operator_rows(self) -> TTOperator:
         """各 mode を row 側に置いた TT operator に変換する。
 
-        Returns:
+        Returns
+        -------
+        TTOperator
             row 次元が ``mode_dims``、column 次元がすべて 1 の TT operator。
         """
         return TTOperator([core.as_operator_row_core() for core in self.cores])
@@ -264,7 +295,9 @@ class TTTensor(BaseTTTensor):
     def as_operator_cols(self) -> TTOperator:
         """各 mode を column 側に置いた TT operator に変換する。
 
-        Returns:
+        Returns
+        -------
+        TTOperator
             row 次元がすべて 1、column 次元が ``mode_dims`` の TT operator。
         """
         return TTOperator([core.as_operator_col_core() for core in self.cores])
@@ -272,7 +305,9 @@ class TTTensor(BaseTTTensor):
     def vectorize_r2l(self) -> np.ndarray:
         """右から左に縮約して dense vector に変換する。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             mode index を ``(id, ..., i1)`` の順に並べた 1 次元配列。
         """
         return self._vectorize_r2l_with_boundary().reshape(math.prod(self.mode_dims))
@@ -280,7 +315,9 @@ class TTTensor(BaseTTTensor):
     def vectorize_l2r(self) -> np.ndarray:
         """左から右に縮約して dense vector に変換する。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             mode index を ``(i1, ..., id)`` の順に並べた 1 次元配列。
         """
         return self._vectorize_l2r_with_boundary().reshape(math.prod(self.mode_dims))
@@ -288,14 +325,20 @@ class TTTensor(BaseTTTensor):
     def get_element(self, idx: Sequence[int]) -> np.generic:
         """指定 index の tensor 要素を返す。
 
-        Args:
-            idx: ``[i1, ..., id]`` 形式の index。
+        Parameters
+        ----------
+        idx : Sequence[int]
+            ``[i1, ..., id]`` 形式の index。
 
-        Returns:
+        Returns
+        -------
+        np.generic
             指定された tensor 要素。
 
-        Raises:
-            ValueError: index の個数または範囲が不正な場合。
+        Raises
+        ------
+        ValueError
+            index の個数または範囲が不正な場合。
         """
         if len(idx) != self.ndim:
             raise ValueError("The number of indices must match the dimension.")
@@ -311,8 +354,10 @@ class TTTensor(BaseTTTensor):
     def as_scalar(self) -> np.generic:
         """全 mode の次元が 1 の場合に scalar として返す。
 
-        Raises:
-            ValueError: dense tensor が scalar でない場合。
+        Raises
+        ------
+        ValueError
+            dense tensor が scalar でない場合。
         """
         if math.prod(self.mode_dims) != 1:
             raise ValueError("mode_dims must all be 1.")
@@ -347,12 +392,18 @@ def filled_tensor(
 ) -> TTTensor:
     """指定値で埋めた TT tensor を返す。
 
-    Args:
-        val: core の各要素に入れる値。
-        mode_dims: 各 mode の次元。
-        ranks: TT rank。整数の場合は全中間 rank に同じ値を使う。
+    Parameters
+    ----------
+    val : int or float or complex
+        core の各要素に入れる値。
+    mode_dims : Sequence[int]
+        各 mode の次元。
+    ranks : int or Sequence[int], default 1
+        TT rank。整数の場合は全中間 rank に同じ値を使う。
 
-    Returns:
+    Returns
+    -------
+    TTTensor
         指定値で埋めた TT tensor。
     """
     if not isinstance(ranks, Sequence):

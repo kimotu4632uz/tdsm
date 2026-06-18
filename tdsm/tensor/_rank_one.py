@@ -27,12 +27,17 @@ class RankOneTensor(Sequence[np.ndarray]):
     ) -> None:
         """rank-1 tensor を初期化する。
 
-        Args:
-            factors: 1 次元 factor 配列の列、または別の RankOneTensor。
-            dtype: factor の保存に使う dtype。
+        Parameters
+        ----------
+        factors : Sequence[np.ndarray] or RankOneTensor
+            1 次元 factor 配列の列、または別の RankOneTensor。
+        dtype : np.dtype or None, optional
+            factor の保存に使う dtype。
 
-        Raises:
-            ValueError: factor が空、または空の factor を含む場合。
+        Raises
+        ------
+        ValueError
+            factor が空、または空の factor を含む場合。
         """
         source = (
             factors.to_list(copy=False)
@@ -81,10 +86,14 @@ class RankOneTensor(Sequence[np.ndarray]):
     def __getitem__(self, index: int | slice) -> np.ndarray | list[np.ndarray]:
         """指定 index または slice の factor を返す。
 
-        Args:
-            index: 取得する factor の index または slice。
+        Parameters
+        ----------
+        index : int or slice
+            取得する factor の index または slice。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray or list[np.ndarray]
             指定された factor 配列、または factor 配列の list。
         """
         return self._factors[index]
@@ -156,10 +165,14 @@ class RankOneTensor(Sequence[np.ndarray]):
     def to_list(self, copy: bool = True) -> list[np.ndarray]:
         """factor 配列を list として返す。
 
-        Args:
-            copy: True の場合、各 factor をコピーして返す。
+        Parameters
+        ----------
+        copy : bool, default True
+            True の場合、各 factor をコピーして返す。
 
-        Returns:
+        Returns
+        -------
+        list[np.ndarray]
             factor 配列の list。
         """
         if copy:
@@ -180,7 +193,9 @@ class RankOneTensor(Sequence[np.ndarray]):
     def normalized(self) -> tuple[Self, np.generic]:
         """各 factor を正規化し、全体の scale を分離する。
 
-        Returns:
+        Returns
+        -------
+        tuple[Self, np.generic]
             ``(正規化済み RankOneTensor, 全体 scale)``。
         """
         normalized_factors: list[np.ndarray] = []
@@ -199,7 +214,9 @@ class RankOneTensor(Sequence[np.ndarray]):
     def to_tt(self) -> TTTensor:
         """同じ mode 次元を持つ一般の `TTTensor` へ変換する。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             rank-1 core 列で構成した `TTTensor`。
         """
         return TTTensor(self._to_tensor_cores(), copy=False)
@@ -207,7 +224,9 @@ class RankOneTensor(Sequence[np.ndarray]):
     def to_chain_tensor(self) -> TTChainTensor:
         """同じ mode 次元を持つ `TTChainTensor` へ変換する。
 
-        Returns:
+        Returns
+        -------
+        TTChainTensor
             rank-1 core 列で構成した `TTChainTensor`。
         """
         return TTChainTensor(self._to_tensor_cores(), copy=False)
@@ -235,14 +254,20 @@ class RankOneTensor(Sequence[np.ndarray]):
     def get_element(self, idx: Sequence[int]) -> np.generic:
         """指定 index の tensor 要素を返す。
 
-        Args:
-            idx: ``[i1, ..., id]`` 形式の index。
+        Parameters
+        ----------
+        idx : Sequence[int]
+            ``[i1, ..., id]`` 形式の index。
 
-        Returns:
+        Returns
+        -------
+        np.generic
             指定された tensor 要素。
 
-        Raises:
-            ValueError: index の個数または範囲が不正な場合。
+        Raises
+        ------
+        ValueError
+            index の個数または範囲が不正な場合。
         """
         if len(idx) != self.ndim:
             raise ValueError("The number of indices must match the dimension.")
@@ -256,8 +281,10 @@ class RankOneTensor(Sequence[np.ndarray]):
     def as_scalar(self) -> np.generic:
         """全 mode の次元が 1 の場合に scalar として返す。
 
-        Raises:
-            ValueError: dense tensor が scalar でない場合。
+        Raises
+        ------
+        ValueError
+            dense tensor が scalar でない場合。
         """
         if self.dense_size != 1:
             raise ValueError("mode_dims must all be 1.")
@@ -281,8 +308,10 @@ class RankOneTensor(Sequence[np.ndarray]):
     def save_npz(self, file: str) -> None:
         """rank-1 core 形式で factor を npz 形式に保存する。
 
-        Args:
-            file: 保存先ファイルパス。
+        Parameters
+        ----------
+        file : str
+            保存先ファイルパス。
         """
         np.savez_compressed(
             file,
@@ -293,14 +322,20 @@ class RankOneTensor(Sequence[np.ndarray]):
     def load_npz(cls, file: str) -> Self:
         """npz ファイルから RankOneTensor を読み込む。
 
-        Args:
-            file: 読み込み元ファイルパス。
+        Parameters
+        ----------
+        file : str
+            読み込み元ファイルパス。
 
-        Returns:
+        Returns
+        -------
+        Self
             読み込んだ RankOneTensor。
 
-        Raises:
-            ValueError: 保存された core が rank-1 tensor を表さない場合。
+        Raises
+        ------
+        ValueError
+            保存された core が rank-1 tensor を表さない場合。
         """
         with np.load(file) as npz:
             cores = [npz[k] for k in npz.files]

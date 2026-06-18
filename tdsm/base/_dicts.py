@@ -28,10 +28,14 @@ class BaseCoreDict(ABC):
     def lift_point(self, x: np.number) -> np.ndarray:
         """1 点の入力を特徴ベクトルへ変換する。
 
-        Args:
-            x: 1 変数入力。
+        Parameters
+        ----------
+        x : np.number
+            1 変数入力。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             1 次元特徴ベクトル。
         """
         ...
@@ -40,10 +44,14 @@ class BaseCoreDict(ABC):
     def lift_batch(self, x_1d: np.ndarray) -> np.ndarray:
         """1 次元サンプル列を特徴行列へ変換する。
 
-        Args:
-            x_1d: 形状 ``(n_samples,)`` の 1 次元サンプル列。
+        Parameters
+        ----------
+        x_1d : np.ndarray
+            形状 ``(n_samples,)`` の 1 次元サンプル列。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             形状 ``(n_samples, output_dim)`` の特徴行列。
         """
         ...
@@ -52,10 +60,14 @@ class BaseCoreDict(ABC):
     def reconstruct(self, features: np.ndarray) -> np.generic:
         """1 mode 分の特徴ベクトルから状態値を復元する。
 
-        Args:
-            features: 形状 ``(output_dim,)`` の特徴ベクトル。
+        Parameters
+        ----------
+        features : np.ndarray
+            形状 ``(output_dim,)`` の特徴ベクトル。
 
-        Returns:
+        Returns
+        -------
+        np.generic
             復元した状態スカラー。
         """
         ...
@@ -74,16 +86,22 @@ class TensorProductDict:
     ) -> None:
         """積辞書を初期化する。
 
-        Args:
-            core_dicts: 各 mode に対応する core dictionary の列。
-                単一の core dictionary を渡した場合は全 mode で同じ辞書を使う。
-            ndim: 単一の core dictionary を複製する mode 数。単一辞書を渡し
-                `ndim` を省略した場合は遅延テンプレートとなり、mode 数は
-                `fit` 時にデータの特徴次元から決まる。
+        Parameters
+        ----------
+        core_dicts : Sequence[BaseCoreDict] or BaseCoreDict
+            各 mode に対応する core dictionary の列。
+            単一の core dictionary を渡した場合は全 mode で同じ辞書を使う。
+        ndim : int or None, optional
+            単一の core dictionary を複製する mode 数。単一辞書を渡し
+            `ndim` を省略した場合は遅延テンプレートとなり、mode 数は
+            `fit` 時にデータの特徴次元から決まる。
 
-        Raises:
-            ValueError: 辞書列が空の場合。
-            TypeError: `BaseCoreDict` でない要素を含む場合。
+        Raises
+        ------
+        ValueError
+            辞書列が空の場合。
+        TypeError
+            `BaseCoreDict` でない要素を含む場合。
         """
         if ndim is None:
             if isinstance(core_dicts, BaseCoreDict):
@@ -123,16 +141,23 @@ class TensorProductDict:
     def fit(self, X: np.ndarray, **kwargs) -> Self:
         """データの特徴次元に合わせて積辞書の mode 構成を確定する。
 
-        Args:
-            X: 形状 ``(n_samples, n_features)`` の学習データ。
-            **kwargs: 追加のハイパーパラメータ(未使用)。
+        Parameters
+        ----------
+        X : np.ndarray
+            形状 ``(n_samples, n_features)`` の学習データ。
+        **kwargs
+            追加のハイパーパラメータ(未使用)。
 
-        Returns:
+        Returns
+        -------
+        Self
             確定済みの自身。
 
-        Raises:
-            ValueError: 入力が不正、または確定済み(mode 数固定)の辞書で
-                特徴次元が一致しない場合。
+        Raises
+        ------
+        ValueError
+            入力が不正、または確定済み(mode 数固定)の辞書で
+            特徴次元が一致しない場合。
         """
         X = check_array(X)
         n_features = X.shape[1]
@@ -160,14 +185,20 @@ class TensorProductDict:
     def lift_point(self, x: np.ndarray) -> RankOneTensor:
         """1 点の状態を rank-1 TT tensor へ変換する。
 
-        Args:
-            x: 形状 ``(ndim,)`` の状態ベクトル。
+        Parameters
+        ----------
+        x : np.ndarray
+            形状 ``(ndim,)`` の状態ベクトル。
 
-        Returns:
+        Returns
+        -------
+        RankOneTensor
             lift 後の `RankOneTensor`。
 
-        Raises:
-            ValueError: 入力長が辞書数と一致しない場合。
+        Raises
+        ------
+        ValueError
+            入力長が辞書数と一致しない場合。
         """
         core_dicts = self._require_fitted()
         values = check_array(x, ensure_2d=False).reshape(-1)
@@ -183,14 +214,20 @@ class TensorProductDict:
     def _lift_cores_batch(self, x: np.ndarray) -> list[np.ndarray]:
         """バッチデータを mode ごとの特徴行列列へ変換する。
 
-        Args:
-            x: 形状 ``(n_samples, n_features)`` のデータ行列。
+        Parameters
+        ----------
+        x : np.ndarray
+            形状 ``(n_samples, n_features)`` のデータ行列。
 
-        Returns:
+        Returns
+        -------
+        list[np.ndarray]
             各 mode ごとに形状 ``(n_samples, feature_dim_d)`` を持つ配列列。
 
-        Raises:
-            ValueError: 入力 shape が不正な場合。
+        Raises
+        ------
+        ValueError
+            入力 shape が不正な場合。
         """
         core_dicts = self._require_fitted()
         data = check_array(x)
@@ -209,14 +246,20 @@ class TensorProductDict:
         ``constant_index`` で固定し、対象 mode の特徴ベクトルを作ってから
         ``CoreDictionary.reconstruct`` に委譲します。
 
-        Args:
-            tt: 積辞書の特徴空間上の `TTTensor`。
+        Parameters
+        ----------
+        tt : TTTensor
+            積辞書の特徴空間上の `TTTensor`。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             復元した状態ベクトル。
 
-        Raises:
-            ValueError: TT の mode 数または mode 次元が辞書と一致しない場合。
+        Raises
+        ------
+        ValueError
+            TT の mode 数または mode 次元が辞書と一致しない場合。
         """
         core_dicts = self._require_fitted()
         if tt.ndim != self.ndim:
@@ -255,18 +298,24 @@ class TTBuilder(ABC):
     ) -> None:
         """builder を初期化する。
 
-        Args:
-            psi: 積辞書、または各 mode の core dictionary の列。
+        Parameters
+        ----------
+        psi : TensorProductDict
+            積辞書、または各 mode の core dictionary の列。
         """
         self.psi = psi
 
     def lift_point(self, x: np.ndarray) -> RankOneTensor:
         """1 点の状態を rank-1 TT tensor へ変換する。
 
-        Args:
-            x: 形状 ``(n_features,)`` の状態ベクトル。
+        Parameters
+        ----------
+        x : np.ndarray
+            形状 ``(n_features,)`` の状態ベクトル。
 
-        Returns:
+        Returns
+        -------
+        RankOneTensor
             lift 後の `RankOneTensor`。
         """
         x = check_array(x, ensure_2d=False)
@@ -275,10 +324,14 @@ class TTBuilder(ABC):
     def lift_batch(self, x: np.ndarray) -> TTTensor:
         """バッチデータを `TTTensor` へ変換する。
 
-        Args:
-            x: 形状 ``(n_samples, n_features)`` のデータ行列。
+        Parameters
+        ----------
+        x : np.ndarray
+            形状 ``(n_samples, n_features)`` のデータ行列。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             sample mode を含む `TTTensor`。
         """
         x = check_array(x)
@@ -288,10 +341,14 @@ class TTBuilder(ABC):
     def _build_from_core_features(self, core_features: Sequence[np.ndarray]) -> TTTensor:
         """辞書評価済み特徴から `TTTensor` を構築する。
 
-        Args:
-            core_features: 各 mode ごとの特徴行列列。
+        Parameters
+        ----------
+        core_features : Sequence[np.ndarray]
+            各 mode ごとの特徴行列列。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             構築した `TTTensor`。
         """
         ...
@@ -299,11 +356,16 @@ class TTBuilder(ABC):
     def fit(self, X: np.ndarray, **kwargs) -> Self:
         """積辞書をデータに合わせて確定する。
 
-        Args:
-            X: 形状 ``(n_samples, n_features)`` の学習データ。
-            **kwargs: 追加のハイパーパラメータ(`psi.fit` へ転送)。
+        Parameters
+        ----------
+        X : np.ndarray
+            形状 ``(n_samples, n_features)`` の学習データ。
+        **kwargs
+            追加のハイパーパラメータ(`psi.fit` へ転送)。
 
-        Returns:
+        Returns
+        -------
+        Self
             確定済みの自身。
         """
         X = check_array(X)

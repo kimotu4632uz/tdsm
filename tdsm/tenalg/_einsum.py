@@ -21,11 +21,16 @@ class CachedEinsum:
     def cached_expr(self, equation: str, *shapes: tuple) -> ContractExpression:
         """shape に対応する contraction 式を cache 付きで返す。
 
-        Args:
-            equation: einsum の添字式。
-            *shapes: 各 operand の shape。
+        Parameters
+        ----------
+        equation : str
+            einsum の添字式。
+        *shapes : tuple
+            各 operand の shape。
 
-        Returns:
+        Returns
+        -------
+        ContractExpression
             再利用可能な contraction 式。
         """
         return oe.contract_expression(equation, *shapes, optimize=self.optimize)
@@ -33,11 +38,16 @@ class CachedEinsum:
     def expr(self, equation: str, *shapes: tuple) -> ContractExpression:
         """shape に対応する contraction 式を返す。
 
-        Args:
-            equation: einsum の添字式。
-            *shapes: 各 operand の shape。
+        Parameters
+        ----------
+        equation : str
+            einsum の添字式。
+        *shapes : tuple
+            各 operand の shape。
 
-        Returns:
+        Returns
+        -------
+        ContractExpression
             再利用可能な contraction 式。
         """
         return self.cached_expr(equation, *shapes)
@@ -45,12 +55,18 @@ class CachedEinsum:
     def contract(self, equation: str, *operands: np.ndarray, cache: bool = True) -> np.ndarray:
         """指定した einsum 式で operand を縮約する。
 
-        Args:
-            equation: einsum の添字式。
-            *operands: 縮約対象の配列。
-            cache: True の場合、shape ごとに構築済みの式を再利用する。
+        Parameters
+        ----------
+        equation : str
+            einsum の添字式。
+        *operands : np.ndarray
+            縮約対象の配列。
+        cache : bool, default True
+            True の場合、shape ごとに構築済みの式を再利用する。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             縮約結果。
         """
         if cache:

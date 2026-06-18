@@ -37,12 +37,17 @@ class BaseTT(metaclass=ABCMeta):
     ) -> None:
         """TT 表現を初期化する。
 
-        Args:
-            cores: TT core の列。
-            copy: True の場合、core をコピーして保持する。
+        Parameters
+        ----------
+        cores : Sequence[np.ndarray | BaseTTCore]
+            TT core の列。
+        copy : bool, default True
+            True の場合、core をコピーして保持する。
 
-        Raises:
-            ValueError: core が空、次元数が不正、または rank が接続しない場合。
+        Raises
+        ------
+        ValueError
+            core が空、次元数が不正、または rank が接続しない場合。
         """
         if len(cores) == 0:
             raise ValueError("cores must contain at least one core.")
@@ -135,12 +140,17 @@ class BaseTT(metaclass=ABCMeta):
 
         更新候補全体の rank 接続を検証してから反映します。
 
-        Args:
-            updates: ``(core_index, core)`` の列。
+        Parameters
+        ----------
+        updates : Sequence[CoreUpdate]
+            ``(core_index, core)`` の列。
 
-        Raises:
-            IndexError: core index が範囲外の場合。
-            ValueError: 更新後の core 列が TT 表現として不正な場合。
+        Raises
+        ------
+        IndexError
+            core index が範囲外の場合。
+        ValueError
+            更新後の core 列が TT 表現として不正な場合。
         """
         new_cores = list(self._cores)
         for index, core in updates:
@@ -157,7 +167,9 @@ class BaseTT(metaclass=ABCMeta):
     def reversed(self) -> Self:
         """core の順序と rank 接続の向きを反転した TT 表現を返す。
 
-        Returns:
+        Returns
+        -------
+        Self
             mode 次元の順序を逆にし、左右 rank 軸を入れ替えた TT 表現。
         """
         return self._new_like([core.reverse_ranks() for core in reversed(self.cores)])
@@ -165,10 +177,14 @@ class BaseTT(metaclass=ABCMeta):
     def astype(self, dtype: np.dtype[np.generic]) -> Self:
         """core の dtype を変換した copy を返す。
 
-        Args:
-            dtype: 変換後の dtype。
+        Parameters
+        ----------
+        dtype : np.dtype
+            変換後の dtype。
 
-        Returns:
+        Returns
+        -------
+        Self
             dtype を変換した TT 表現。
         """
         return self._new_like([np.asarray(core, dtype=dtype).copy() for core in self.cores])
@@ -201,15 +217,24 @@ class BaseTT(metaclass=ABCMeta):
     ) -> Self:
         """左直交化した TT 表現を返す。
 
-        Args:
-            threshold: 相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
-            max_rank: 各中間 rank の最大値。
-            rank_list: core ごとの rank 上限。
-            method: 局所分解に使う手法。
-            start_idx: 左直交化を開始する core index。
-            end_idx: 左直交化する最後の core index。省略時は最後から 2 番目。
+        Parameters
+        ----------
+        threshold : float or None, default 0
+            相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
+        max_rank : int or None, optional
+            各中間 rank の最大値。
+        rank_list : list[int] or None, optional
+            core ごとの rank 上限。
+        method : {"svd", "qr"}, default "svd"
+            局所分解に使う手法。
+        start_idx : int, default 0
+            左直交化を開始する core index。
+        end_idx : int or None, optional
+            左直交化する最後の core index。省略時は最後から 2 番目。
 
-        Returns:
+        Returns
+        -------
+        Self
             左直交化した TT 表現。
         """
         if not isinstance(start_idx, Integral):
@@ -273,15 +298,24 @@ class BaseTT(metaclass=ABCMeta):
     ) -> Self:
         """右直交化した TT 表現を返す。
 
-        Args:
-            threshold: 相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
-            max_rank: 各中間 rank の最大値。
-            rank_list: core ごとの rank 上限。
-            method: 局所分解に使う手法。
-            start_idx: 右直交化を開始する core index。省略時は最後の core。
-            end_idx: 右直交化する最後の core index。
+        Parameters
+        ----------
+        threshold : float or None, default 0
+            相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
+        max_rank : int or None, optional
+            各中間 rank の最大値。
+        rank_list : list[int] or None, optional
+            core ごとの rank 上限。
+        method : {"svd", "qr"}, default "svd"
+            局所分解に使う手法。
+        start_idx : int or None, optional
+            右直交化を開始する core index。省略時は最後の core。
+        end_idx : int, default 1
+            右直交化する最後の core index。
 
-        Returns:
+        Returns
+        -------
+        Self
             右直交化した TT 表現。
         """
         if start_idx is not None and not isinstance(start_idx, Integral):
@@ -337,8 +371,10 @@ class BaseTT(metaclass=ABCMeta):
     def save_npz(self, file: str) -> None:
         """TT core を npz 形式で保存する。
 
-        Args:
-            file: 保存先ファイルパス。
+        Parameters
+        ----------
+        file : str
+            保存先ファイルパス。
         """
         np.savez_compressed(file, *[core.as_array(copy=False) for core in self.cores])
 
@@ -346,10 +382,14 @@ class BaseTT(metaclass=ABCMeta):
     def load_npz(cls, file: str) -> Self:
         """npz ファイルから TT 表現を読み込む。
 
-        Args:
-            file: 読み込み元ファイルパス。
+        Parameters
+        ----------
+        file : str
+            読み込み元ファイルパス。
 
-        Returns:
+        Returns
+        -------
+        Self
             読み込んだ TT 表現。
         """
         with np.load(file) as npz:

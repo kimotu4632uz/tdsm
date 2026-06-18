@@ -14,7 +14,7 @@ class TDSMBaseEstimator(ABC, RegressorMixin, BaseEstimator):
 
     def __init__(self) -> None:
         """Initialize the TDBaseEstimator instance."""
-        super(TDSMBaseEstimator, self).__init__()
+        super().__init__()
 
     @abstractmethod
     def fit(self, X: np.ndarray, y: np.ndarray) -> TDSMBaseEstimator:
@@ -33,7 +33,7 @@ class TDSMBaseEstimator(ABC, RegressorMixin, BaseEstimator):
         TDSMBaseEstimator
             The fitted estimator.
         """
-        pass
+        ...
 
     @abstractmethod
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -50,7 +50,7 @@ class TDSMBaseEstimator(ABC, RegressorMixin, BaseEstimator):
         ndarray of shape (n_samples, n_targets)
             Predicted values.
         """
-        pass
+        ...
 
     def __sklearn_tags__(self) -> dict[str, Any]:
         """
@@ -61,6 +61,6 @@ class TDSMBaseEstimator(ABC, RegressorMixin, BaseEstimator):
         dict
             Dictionary of boolean tags.
         """
-        tags = super(TDSMBaseEstimator, self).__sklearn_tags__()
+        tags = super().__sklearn_tags__()
         tags.target_tags.multi_output = True
         return tags

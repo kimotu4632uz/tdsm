@@ -18,9 +18,12 @@ class MonomialsCoreDict(BaseCoreDict):
     def __init__(self, degree: int) -> None:
         """単項式辞書を初期化する。
 
-        Args:
-            degree: 単項式の次数。
+        Parameters
+        ----------
+        degree : int
+            単項式の次数。
         """
+        super().__init__()
         self.degree = degree
         self._degree_list = np.arange(self.degree + 1)
 
@@ -38,15 +41,22 @@ class MonomialsCoreDict(BaseCoreDict):
     def s2i(self, degree: int) -> int:
         """単項式の次数を特徴 index に変換する。
 
-        Args:
-            degree: 変換する単項式の次数。
+        Parameters
+        ----------
+        degree : int
+            変換する単項式の次数。
 
-        Returns:
+        Returns
+        -------
+        int
             対応する特徴 index。
 
-        Raises:
-            TypeError: ``degree`` が整数でない場合。
-            ValueError: ``degree`` が辞書に含まれない場合。
+        Raises
+        ------
+        TypeError
+            ``degree`` が整数でない場合。
+        ValueError
+            ``degree`` が辞書に含まれない場合。
         """
         if isinstance(degree, (bool, np.bool_)):
             raise ValueError("degree must be an integer")
@@ -62,10 +72,14 @@ class MonomialsCoreDict(BaseCoreDict):
     def lift_point(self, x: np.number) -> np.ndarray:
         """`1, x, x^2, ..., x^degree` を返す。
 
-        Args:
-            x: 入力スカラー。
+        Parameters
+        ----------
+        x : np.number
+            入力スカラー。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             単項式特徴ベクトル。
         """
         return np.power(x, self._degree_list)
@@ -74,14 +88,20 @@ class MonomialsCoreDict(BaseCoreDict):
     def lift_batch(self, x_1d: np.ndarray) -> np.ndarray:
         """1 次元サンプル列を単項式辞書で一括評価する。
 
-        Args:
-            x_1d: 形状 ``(n_samples,)`` の 1 次元サンプル列。
+        Parameters
+        ----------
+        x_1d : np.ndarray
+            形状 ``(n_samples,)`` の 1 次元サンプル列。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             形状 ``(n_samples, degree + 1)`` の特徴行列。
 
-        Raises:
-            ValueError: 入力が空の場合。
+        Raises
+        ------
+        ValueError
+            入力が空の場合。
         """
         values = check_array(x_1d, ensure_2d=False).reshape(-1)
         return np.power(values[:, np.newaxis], self._degree_list[np.newaxis, :])
@@ -90,14 +110,20 @@ class MonomialsCoreDict(BaseCoreDict):
     def reconstruct(self, features: np.ndarray) -> np.generic:
         """単項式特徴ベクトルから 1 次項を取り出す。
 
-        Args:
-            features: 形状 ``(degree + 1,)`` の単項式特徴ベクトル。
+        Parameters
+        ----------
+        features : np.ndarray
+            形状 ``(degree + 1,)`` の単項式特徴ベクトル。
 
-        Returns:
+        Returns
+        -------
+        np.generic
             1 次項の値。
 
-        Raises:
-            ValueError: 1 次項を持たない場合、または入力長が不正な場合。
+        Raises
+        ------
+        ValueError
+            1 次項を持たない場合、または入力長が不正な場合。
         """
         if self.degree < 1:
             raise ValueError("first-order terms are not available when degree < 1")

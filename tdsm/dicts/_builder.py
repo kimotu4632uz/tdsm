@@ -21,9 +21,12 @@ class SVDTTBuilder(TTBuilder):
     ) -> None:
         """SVD builder を初期化する。
 
-        Args:
-            psi: 積辞書、または各 mode の core dictionary の列。
-            threshold_for_svd: 特異値の累積寄与率による打ち切り閾値。
+        Parameters
+        ----------
+        psi : TensorProductDict
+            積辞書、または各 mode の core dictionary の列。
+        threshold_for_svd : float or None
+            特異値の累積寄与率による打ち切り閾値。
         """
         super().__init__(psi)
         self.threshold_for_svd = threshold_for_svd
@@ -32,10 +35,14 @@ class SVDTTBuilder(TTBuilder):
     def _build_from_core_features(self, core_features: Sequence[np.ndarray]) -> TTTensor:
         """辞書評価済み特徴から sample mode を含む `TTTensor` を構築する。
 
-        Args:
-            core_features: 各 mode ごとの特徴行列列。
+        Parameters
+        ----------
+        core_features : Sequence[np.ndarray]
+            各 mode ごとの特徴行列列。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             空間 mode と sample mode を持つ `TTTensor`。
         """
         basis_tt, singular_values, right_vectors = self._factorize_from_core_features(core_features)
@@ -46,10 +53,14 @@ class SVDTTBuilder(TTBuilder):
     def factorize(self, x: np.ndarray) -> tuple[TTChainTensor, np.ndarray, np.ndarray]:
         """バッチデータを TT 基底と右側行列へ分解する。
 
-        Args:
-            x: 形状 ``(n_samples, n_features)`` のデータ行列。
+        Parameters
+        ----------
+        x : np.ndarray
+            形状 ``(n_samples, n_features)`` のデータ行列。
 
-        Returns:
+        Returns
+        -------
+        tuple[TTChainTensor, np.ndarray, np.ndarray]
             ``(TT 基底, 特異値, 右特異ベクトル行列)``。
         """
         x = check_array(x)
@@ -61,14 +72,20 @@ class SVDTTBuilder(TTBuilder):
     ) -> tuple[TTChainTensor, np.ndarray, np.ndarray]:
         """辞書評価済み特徴を TT 基底と右側行列へ分解する。
 
-        Args:
-            core_features: 各 mode ごとに形状 ``(n_samples, feature_dim)`` を持つ配列列。
+        Parameters
+        ----------
+        core_features : Sequence[np.ndarray]
+            各 mode ごとに形状 ``(n_samples, feature_dim)`` を持つ配列列。
 
-        Returns:
+        Returns
+        -------
+        tuple[TTChainTensor, np.ndarray, np.ndarray]
             ``(TT 基底, 特異値, 右特異ベクトル行列)``。
 
-        Raises:
-            ValueError: 入力が空、shape が不整合、またはサンプル数が一致しない場合。
+        Raises
+        ------
+        ValueError
+            入力が空、shape が不整合、またはサンプル数が一致しない場合。
         """
         if len(core_features) == 0:
             raise ValueError("core_features must contain at least one mode")

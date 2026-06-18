@@ -60,9 +60,12 @@ class CrankNicolson:
     ) -> None:
         """Crank-Nicolson solver を初期化する。
 
-        Args:
-            solver_type: ALS/MALS のどちらの solver を使うか。
-            options: solver オプション。
+        Parameters
+        ----------
+        solver_type : {"als", "mals"}
+            ALS/MALS のどちらの solver を使うか。
+        options : LinearSolverOptions
+            solver オプション。
         """
         if solver_type not in {'als', 'mals'}:
             raise ValueError("solver_type must be 'als' or 'mals'.")
@@ -73,16 +76,24 @@ class CrankNicolson:
     def solve(self, op: TTOperator, p_ini: TTTensor, time_grid: TimeGrid) -> tuple[TTTensor, ...]:
         """指定された時間グリッド上で TT tensor 状態を時間発展させる。
 
-        Args:
-            op: 線形 ODE の生成作用素。
-            p_ini: 初期状態を表す TT tensor。
-            time_grid: 時間刻みと保存時刻の設定。
+        Parameters
+        ----------
+        op : TTOperator
+            線形 ODE の生成作用素。
+        p_ini : TTTensor
+            初期状態を表す TT tensor。
+        time_grid : TimeGrid
+            時間刻みと保存時刻の設定。
 
-        Returns:
+        Returns
+        -------
+        tuple[TTTensor, ...]
             保存対象時刻における TT tensor 状態の tuple。
 
-        Raises:
-            ValueError: operator と初期状態の次元が一致しない場合。
+        Raises
+        ------
+        ValueError
+            operator と初期状態の次元が一致しない場合。
         """
         if op.col_dims != p_ini.mode_dims:
             raise ValueError("Operator column dimensions must match the initial state mode dimensions.")
@@ -135,21 +146,29 @@ class _ALSEnvironment:
     def __init__(self, contractor: CachedEinsum) -> None:
         """環境テンソルの縮約に使う contractor を保持する。
 
-        Args:
-            contractor: einsum 縮約を実行する補助オブジェクト。
+        Parameters
+        ----------
+        contractor : CachedEinsum
+            einsum 縮約を実行する補助オブジェクト。
         """
         self.contractor = contractor
 
     def init(self, op: TTOperator, sol: TTTensor, rhs: TTTensor) -> None:
         """局所問題を解くための環境テンソルを初期化する。
 
-        Args:
-            op: 左辺の正方 TT operator。
-            sol: 更新対象の初期解 TT tensor。
-            rhs: 右辺 TT tensor。
+        Parameters
+        ----------
+        op : TTOperator
+            左辺の正方 TT operator。
+        sol : TTTensor
+            更新対象の初期解 TT tensor。
+        rhs : TTTensor
+            右辺 TT tensor。
 
-        Raises:
-            ValueError: operator、解、右辺の次元が整合しない場合。
+        Raises
+        ------
+        ValueError
+            operator、解、右辺の次元が整合しない場合。
         """
         if op.ndim != sol.ndim or op.ndim != rhs.ndim:
             raise ValueError("Operator, solution, and right-hand side must have the same dimension.")
@@ -185,8 +204,10 @@ class _ALSEnvironment:
 
         Gelß (2017) の式 (4.2.16) に対応します。
 
-        Args:
-            d: 更新先の core index。``d - 1`` 番目の core を縮約に使う。
+        Parameters
+        ----------
+        d : int
+            更新先の core index。``d - 1`` 番目の core を縮約に使う。
         """
         solv = self.sol_cores[d-1].reshape(self.sol_ranks[d-1],
                                            self.sol_mode_dims[d-1], self.sol_ranks[d])
@@ -198,8 +219,10 @@ class _ALSEnvironment:
 
         Gelß (2017) の式 (4.2.17) に対応します。
 
-        Args:
-            d: 更新先の core index。``d + 1`` 番目の core を縮約に使う。
+        Parameters
+        ----------
+        d : int
+            更新先の core index。``d + 1`` 番目の core を縮約に使う。
         """
         solv = self.sol_cores[d+1].reshape(self.sol_ranks[d+1],
                                            self.sol_mode_dims[d+1], self.sol_ranks[d+2])
@@ -211,8 +234,10 @@ class _ALSEnvironment:
 
         Gelß (2017) の式 (4.2.18) に対応します。
 
-        Args:
-            d: 更新先の core index。``d - 1`` 番目の core を縮約に使う。
+        Parameters
+        ----------
+        d : int
+            更新先の core index。``d - 1`` 番目の core を縮約に使う。
         """
         rhsv = self.rhs.cores[d-1].as_array().reshape(self.rhs.ranks[d-1],
                                            self.rhs.mode_dims[d-1], self.rhs.ranks[d])
@@ -226,8 +251,10 @@ class _ALSEnvironment:
 
         Gelß (2017) の式 (4.2.19) に対応します。
 
-        Args:
-            d: 更新先の core index。``d + 1`` 番目の core を縮約に使う。
+        Parameters
+        ----------
+        d : int
+            更新先の core index。``d + 1`` 番目の core を縮約に使う。
         """
         solv = self.sol_cores[d+1].reshape(self.sol_ranks[d+1],
                                            self.sol_mode_dims[d+1], self.sol_ranks[d+2])
@@ -250,8 +277,10 @@ class ALS:
     ) -> None:
         """ALS solver を初期化する。
 
-        Args:
-            options: ALS solver オプション。
+        Parameters
+        ----------
+        options : LinearSolverOptions
+            ALS solver オプション。
         """
         self.options = options
 
@@ -263,12 +292,18 @@ class ALS:
 
         Gelß (2017) の第 4 章および付録 A.2.2 Algorithm 11 に対応します。
 
-        Args:
-            op: 左辺の正方 TT operator。
-            initial_sol: 初期解。
-            rhs: 右辺 TT tensor。
+        Parameters
+        ----------
+        op : TTOperator
+            左辺の正方 TT operator。
+        initial_sol : TTTensor
+            初期解。
+        rhs : TTTensor
+            右辺 TT tensor。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             更新後の解 TT tensor。
         """
         self._env.init(op, initial_sol, rhs)
@@ -349,13 +384,19 @@ class ALS:
     def __update_core_forward(self, d: int, local_A: LinearOperator, local_u: np.ndarray) -> None:
         """前進 sweep で 1 core の局所問題を解き、右 rank を更新する。
 
-        Args:
-            d: 更新する core index。
-            local_A: 局所線形作用素。
-            local_u: 局所右辺ベクトル。
+        Parameters
+        ----------
+        d : int
+            更新する core index。
+        local_A : LinearOperator
+            局所線形作用素。
+        local_u : np.ndarray
+            局所右辺ベクトル。
 
-        Raises:
-            ValueError: LGMRES が収束しない場合。
+        Raises
+        ------
+        ValueError
+            LGMRES が収束しない場合。
         """
         opts = self.options
         x, exitCode = lgmres(local_A, local_u, atol=opts.atol, rtol=opts.rtol)
@@ -388,13 +429,19 @@ class ALS:
     def __update_core_backward(self, d: int, local_A: LinearOperator, local_u: np.ndarray) -> None:
         """後退 sweep で 1 core の局所問題を解き、左 rank を更新する。
 
-        Args:
-            d: 更新する core index。
-            local_A: 局所線形作用素。
-            local_u: 局所右辺ベクトル。
+        Parameters
+        ----------
+        d : int
+            更新する core index。
+        local_A : LinearOperator
+            局所線形作用素。
+        local_u : np.ndarray
+            局所右辺ベクトル。
 
-        Raises:
-            ValueError: LGMRES が収束しない場合。
+        Raises
+        ------
+        ValueError
+            LGMRES が収束しない場合。
         """
         opts = self.options
         x, exitCode = lgmres(local_A, local_u, atol=opts.atol, rtol=opts.rtol)
@@ -445,8 +492,10 @@ class MALS:
     ) -> None:
         """MALS solver を初期化する。
 
-        Args:
-            options: MALS solver オプション。
+        Parameters
+        ----------
+        options : LinearSolverOptions
+            MALS solver オプション。
         """
         if options.alg_decomp != 'svd':
             raise ValueError("MALS only supports SVD-based decomposition.")
@@ -460,12 +509,18 @@ class MALS:
 
         Gelß (2017) の第 4 章および付録 A.2.3 Algorithm 12 に対応します。
 
-        Args:
-            op: 左辺の正方 TT operator。
-            initial_sol: 初期解。
-            rhs: 右辺 TT tensor。
+        Parameters
+        ----------
+        op : TTOperator
+            左辺の正方 TT operator。
+        initial_sol : TTTensor
+            初期解。
+        rhs : TTTensor
+            右辺 TT tensor。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             更新後の解 TT tensor。
         """
         self._env.init(op, initial_sol, rhs)
@@ -548,13 +603,19 @@ class MALS:
     def __update_core_forward(self, d: int, local_A: LinearOperator, local_u: np.ndarray) -> None:
         """前進 sweep で隣接 2 core の局所問題を解き、左 core を更新する。
 
-        Args:
-            d: 更新対象となる左側 core の index。
-            local_A: 局所線形作用素。
-            local_u: 局所右辺ベクトル。
+        Parameters
+        ----------
+        d : int
+            更新対象となる左側 core の index。
+        local_A : LinearOperator
+            局所線形作用素。
+        local_u : np.ndarray
+            局所右辺ベクトル。
 
-        Raises:
-            ValueError: LGMRES が収束しない場合。
+        Raises
+        ------
+        ValueError
+            LGMRES が収束しない場合。
         """
         opts = self.options
         x, exitCode = lgmres(local_A, local_u, atol=opts.atol, rtol=opts.rtol)
@@ -579,13 +640,19 @@ class MALS:
     def __update_core_backward(self, d: int, local_A: LinearOperator, local_u: np.ndarray) -> None:
         """後退 sweep で隣接 2 core の局所問題を解き、右 core を更新する。
 
-        Args:
-            d: 更新対象となる左側 core の index。
-            local_A: 局所線形作用素。
-            local_u: 局所右辺ベクトル。
+        Parameters
+        ----------
+        d : int
+            更新対象となる左側 core の index。
+        local_A : LinearOperator
+            局所線形作用素。
+        local_u : np.ndarray
+            局所右辺ベクトル。
 
-        Raises:
-            ValueError: LGMRES が収束しない場合。
+        Raises
+        ------
+        ValueError
+            LGMRES が収束しない場合。
         """
         opts = self.options
         x, exitCode = lgmres(local_A, local_u, atol=opts.atol, rtol=opts.rtol)

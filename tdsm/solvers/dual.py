@@ -60,14 +60,20 @@ class TTStatsTrajectory:
         """観測時刻列。"""
         return self.time_grid.obs_times
 
+
 def create_generator(model: BaseModel, degree: int) -> TTOperator:
     """SDE モデルの Koopman 生成子を TT operator として構築する。
 
-    Args:
-        model: 随伴作用素を構築する SDE モデル。
-        degree: 各 mode の最大次数。
+    Parameters
+    ----------
+    model : BaseModel
+        随伴作用素を構築する SDE モデル。
+    degree : int
+        各 mode の最大次数。
 
-    Returns:
+    Returns
+    -------
+    TTOperator
         辞書として Monomials4TT を使って得られる Koopman 生成子を表す TT operator。
     """
     sym_derivs = sp.symarray(r'\partial', (model.dim,))
@@ -136,11 +142,16 @@ class TTDual:
     ) -> None:
         """TT dual ソルバーを初期化する。
 
-        Args:
-            degree: 各 mode の最大次数。
-            tt_rank: Crank-Nicolson で使う最大 TT rank。
-            threshold: TT rank 打ち切り閾値。``None`` の場合は打ち切らない。
-            method: 線形方程式ソルバーの種類。
+        Parameters
+        ----------
+        degree : int
+            各 mode の最大次数。
+        tt_rank : int
+            Crank-Nicolson で使う最大 TT rank。
+        threshold : float or None
+            TT rank 打ち切り閾値。``None`` の場合は打ち切らない。
+        method : {"als", "mals"}, default "als"
+            線形方程式ソルバーの種類。
         """
         self.degree = degree
         self.tt_rank = tt_rank
@@ -151,11 +162,16 @@ class TTDual:
     def _calc_stat(self, tt: TTTensor, x0: np.ndarray) -> float:
         """初期点で評価した TT tensor の期待値を計算する。
 
-        Args:
-            tt: 評価対象の TT tensor。
-            x0: 初期点。
+        Parameters
+        ----------
+        tt : TTTensor
+            評価対象の TT tensor。
+        x0 : np.ndarray
+            初期点。
 
-        Returns:
+        Returns
+        -------
+        float
             初期点で評価した期待値。
         """
 
@@ -170,17 +186,25 @@ class TTDual:
     def solve_ode(self, *, model: BaseModel, time_grid: TimeGrid, comp_index: list[int]) -> Sequence[TTTensor]:
         """双対方程式を解き、観測時刻ごとの統計量と状態を返す。
 
-        Args:
-            model: 対象とする BaseModel。
-            time_grid: 時間離散化と保存時刻の設定。
-            comp_index: 初期 TT tensor で 1 を置く各 mode の単項式次数。
+        Parameters
+        ----------
+        model : BaseModel
+            対象とする BaseModel。
+        time_grid : TimeGrid
+            時間離散化と保存時刻の設定。
+        comp_index : list[int]
+            初期 TT tensor で 1 を置く各 mode の単項式次数。
 
-        Returns:
+        Returns
+        -------
+        Sequence[TTTensor]
             統計量列と TT tensor 状態列を含む軌道。
 
-        Raises:
-            ValueError: ``comp_index`` の長さが model の次元と一致しない場合、
-                または次数が辞書に含まれない場合。
+        Raises
+        ------
+        ValueError
+            ``comp_index`` の長さが model の次元と一致しない場合、
+            または次数が辞書に含まれない場合。
         """
         if len(comp_index) != model.dim:
             raise ValueError("comp_index must have the same length as model dimension.")
@@ -206,12 +230,20 @@ class TTDual:
     def solve(self, *, model: BaseModel, x0: np.ndarray, time_grid: TimeGrid, comp_index: list[int]) -> TTStatsTrajectory:
         """双対方程式を解き、観測時刻ごとの統計量と状態を返す。
 
-        Args:
-            model: 対象とする BaseModel。
-            x0: 統計量を評価する初期点。
-            time_grid: 時間離散化と保存時刻の設定。
-            comp_index: 初期 TT tensor で 1 を置く各 mode の単項式次数。
-        Returns:
+        Parameters
+        ----------
+        model : BaseModel
+            対象とする BaseModel。
+        x0 : np.ndarray
+            統計量を評価する初期点。
+        time_grid : TimeGrid
+            時間離散化と保存時刻の設定。
+        comp_index : list[int]
+            初期 TT tensor で 1 を置く各 mode の単項式次数。
+
+        Returns
+        -------
+        TTStatsTrajectory
             統計量列と TT tensor 状態列を含む軌道。
         """
         p_list = self.solve_ode(model=model, time_grid=time_grid, comp_index=comp_index)

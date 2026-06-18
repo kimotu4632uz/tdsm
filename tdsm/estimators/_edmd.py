@@ -41,19 +41,26 @@ class TTEDMD(TDSMBaseEstimator):
     ) -> None:
         """TTEDMD 推定器を初期化する。
 
-        Args:
-            psix_cls: 入力側 ``X`` を lift する積辞書クラス。`fit` 時に
-                ``psix_cls(**psix_kwargs)`` で構築する。
-            psix_kwargs: ``psix_cls`` へ渡すキーワード引数。``core_dicts`` に単一の
-                core dictionary を渡し ``ndim`` を省略すると、mode 数は `fit` 時に
-                ``X`` の特徴次元へ合わせる(遅延テンプレート)。``None`` の場合は
-                ``{"core_dicts": Monomials4TT(degree=2)}`` を使う。
-            psiy_cls: 出力側 ``y`` を lift する積辞書クラス。
-            psiy_kwargs: ``psiy_cls`` へ渡すキーワード引数。``None`` の場合は
-                ``psix_kwargs`` と同じ既定値を使う。
-            threshold_for_svd: lifted 行列の SVD 打ち切り閾値。
-            threshold_for_pinv: 擬似逆で無視する特異値の閾値。``None`` の場合は
-                0 でない特異値をすべて使う。
+        Parameters
+        ----------
+        psix_cls : type[TensorProductDict], default TensorProductDict
+            入力側 ``X`` を lift する積辞書クラス。`fit` 時に
+            ``psix_cls(**psix_kwargs)`` で構築する。
+        psix_kwargs : dict[str, Any] or None, optional
+            ``psix_cls`` へ渡すキーワード引数。``core_dicts`` に単一の
+            core dictionary を渡し ``ndim`` を省略すると、mode 数は `fit` 時に
+            ``X`` の特徴次元へ合わせる(遅延テンプレート)。``None`` の場合は
+            ``{"core_dicts": Monomials4TT(degree=2)}`` を使う。
+        psiy_cls : type[TensorProductDict], default TensorProductDict
+            出力側 ``y`` を lift する積辞書クラス。
+        psiy_kwargs : dict[str, Any] or None, optional
+            ``psiy_cls`` へ渡すキーワード引数。``None`` の場合は
+            ``psix_kwargs`` と同じ既定値を使う。
+        threshold_for_svd : float or None, optional
+            lifted 行列の SVD 打ち切り閾値。
+        threshold_for_pinv : float or None, optional
+            擬似逆で無視する特異値の閾値。``None`` の場合は
+            0 でない特異値をすべて使う。
         """
         super().__init__()
         self.psix_cls = psix_cls
@@ -83,12 +90,17 @@ class TTEDMD(TDSMBaseEstimator):
     def fit(self, X: np.ndarray, y: np.ndarray) -> Self:
         """スナップショット列から TT 形式の Koopman 作用素を推定する。
 
-        Args:
-            X: スナップショット列の入力側。shape は ``(n_samples, n_features)``。
-            y: スナップショット列の出力側。shape は ``(n_samples, n_features)`` か
-                ``(n_samples,)``。
+        Parameters
+        ----------
+        X : np.ndarray
+            スナップショット列の入力側。shape は ``(n_samples, n_features)``。
+        y : np.ndarray
+            スナップショット列の出力側。shape は ``(n_samples, n_features)`` か
+            ``(n_samples,)``。
 
-        Returns:
+        Returns
+        -------
+        Self
             推定済みの自身。
         """
         X, y = validate_data(self, X, y, reset=True, multi_output=True)
@@ -147,10 +159,14 @@ class TTEDMD(TDSMBaseEstimator):
     def predict(self, X: np.ndarray) -> np.ndarray:
         """推定済み TT Koopman 作用素で 1 ステップ先の状態を予測する。
 
-        Args:
-            X: 初期状態のバッチ。形状 ``(n_samples, n_features)``。
+        Parameters
+        ----------
+        X : np.ndarray
+            初期状態のバッチ。形状 ``(n_samples, n_features)``。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             予測した次時刻の状態。形状 ``(n_samples, n_targets)``。`fit` 時の
             ``y`` が 1 次元だった場合は ``(n_samples,)``。
         """
@@ -167,10 +183,14 @@ class TTEDMD(TDSMBaseEstimator):
     def predict_tt(self, x: np.ndarray) -> TTTensor:
         """推定済み TT Koopman 作用素で 1 ステップ先のリフト状態を予測する。
 
-        Args:
-            x: 初期状態。形状 ``(n_features,)``。
+        Parameters
+        ----------
+        x : np.ndarray
+            初期状態。形状 ``(n_features,)``。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             予測したリフト状態の `TTTensor`(出力側 ``psiy_`` 空間)。
         """
         check_is_fitted(self, "K_")

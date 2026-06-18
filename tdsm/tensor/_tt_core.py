@@ -23,12 +23,17 @@ class BaseTTCore:
     ) -> None:
         """TT core を初期化する。
 
-        Args:
-            data: 保持する core 配列、または別の TT core。
-            copy: True の場合は配列をコピーして保持する。
+        Parameters
+        ----------
+        data : np.ndarray or BaseTTCore
+            保持する core 配列、または別の TT core。
+        copy : bool, default True
+            True の場合は配列をコピーして保持する。
 
-        Raises:
-            ValueError: 次元数、rank、または mode 次元が不正な場合。
+        Raises
+        ------
+        ValueError
+            次元数、rank、または mode 次元が不正な場合。
         """
         if isinstance(data, BaseTTCore):
             array = data.as_array(copy=copy)
@@ -57,10 +62,14 @@ class BaseTTCore:
     def __getitem__(self, key: Any) -> Any:
         """内部配列の要素または slice を返す。
 
-        Args:
-            key: NumPy 配列に渡す index または slice。
+        Parameters
+        ----------
+        key : Any
+            NumPy 配列に渡す index または slice。
 
-        Returns:
+        Returns
+        -------
+        Any
             内部配列から取得した値。
         """
         return self._data[key]
@@ -68,45 +77,62 @@ class BaseTTCore:
     def __setitem__(self, key: Any, value: Any) -> None:
         """内部配列の要素または slice を更新する。
 
-        Args:
-            key: NumPy 配列に渡す index または slice。
-            value: 代入する値。
+        Parameters
+        ----------
+        key : Any
+            NumPy 配列に渡す index または slice。
+        value : Any
+            代入する値。
         """
         self._data[key] = value
 
     def __mul__(self, scalar: Scalar) -> Self:
         """右から scalar 倍した同型の core を返す。
 
-        Args:
-            scalar: 内部配列へ掛ける scalar。
+        Parameters
+        ----------
+        scalar : Scalar
+            内部配列へ掛ける scalar。
 
-        Returns:
+        Returns
+        -------
+        Self
             scalar 倍した core。
 
-        Raises:
-            TypeError: ``scalar`` が scalar でない場合。
+        Raises
+        ------
+        TypeError
+            ``scalar`` が scalar でない場合。
         """
         return self.scale(scalar)
 
     def __rmul__(self, scalar: Scalar) -> Self:
         """左から scalar 倍した同型の core を返す。
 
-        Args:
-            scalar: 内部配列へ掛ける scalar。
+        Parameters
+        ----------
+        scalar : Scalar
+            内部配列へ掛ける scalar。
 
-        Returns:
+        Returns
+        -------
+        Self
             scalar 倍した core。
 
-        Raises:
-            TypeError: ``scalar`` が scalar でない場合。
+        Raises
+        ------
+        TypeError
+            ``scalar`` が scalar でない場合。
         """
         return self.scale(scalar)
 
     def _validate(self) -> None:
         """core shape の整合性を検証する。
 
-        Raises:
-            ValueError: 次元数、rank、または mode 次元が不正な場合。
+        Raises
+        ------
+        ValueError
+            次元数、rank、または mode 次元が不正な場合。
         """
         if self._data.ndim != self.core_ndim:
             raise ValueError(f"Each core must be {self.core_ndim}-dimensional.")
@@ -153,10 +179,14 @@ class BaseTTCore:
     def as_array(self, copy: bool = False) -> np.ndarray:
         """内部配列を返す。
 
-        Args:
-            copy: True の場合はコピーを返す。
+        Parameters
+        ----------
+        copy : bool, default False
+            True の場合はコピーを返す。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             内部配列。
         """
         return self._data.copy() if copy else self._data
@@ -168,11 +198,16 @@ class BaseTTCore:
     ) -> np.ndarray:
         """内部配列の dtype を変換した結果を返す。
 
-        Args:
-            dtype: 変換後の dtype。
-            copy: True の場合はコピーを返す。
+        Parameters
+        ----------
+        dtype : np.dtype
+            変換後の dtype。
+        copy : bool, default True
+            True の場合はコピーを返す。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             dtype 変換後の配列。
         """
         return self._data.astype(dtype, copy=copy)
@@ -184,7 +219,9 @@ class BaseTTCore:
     def reverse_ranks(self) -> Self:
         """左右 rank 軸を入れ替えた同型の core を返す。
 
-        Returns:
+        Returns
+        -------
+        Self
             mode 次元の順序を保ち、先頭と末尾の rank 軸だけを
             入れ替えた core。
         """
@@ -202,10 +239,14 @@ class BaseTTCore:
     def from_left_unfold(self, matrix: np.ndarray) -> Self:
         """左行列化から同型の core を復元する。
 
-        Args:
-            matrix: 形状 ``(left_rank * mode_size, new_right_rank)`` の行列。
+        Parameters
+        ----------
+        matrix : np.ndarray
+            形状 ``(left_rank * mode_size, new_right_rank)`` の行列。
 
-        Returns:
+        Returns
+        -------
+        Self
             復元した core。
         """
         return type(self)(
@@ -216,10 +257,14 @@ class BaseTTCore:
     def from_right_unfold(self, matrix: np.ndarray) -> Self:
         """右行列化から同型の core を復元する。
 
-        Args:
-            matrix: 形状 ``(new_left_rank, mode_size * right_rank)`` の行列。
+        Parameters
+        ----------
+        matrix : np.ndarray
+            形状 ``(new_left_rank, mode_size * right_rank)`` の行列。
 
-        Returns:
+        Returns
+        -------
+        Self
             復元した core。
         """
         return type(self)(
@@ -230,14 +275,20 @@ class BaseTTCore:
     def scale(self, scalar: Scalar) -> Self:
         """scalar 倍した同型の core を返す。
 
-        Args:
-            scalar: 内部配列へ掛ける scalar。
+        Parameters
+        ----------
+        scalar : Scalar
+            内部配列へ掛ける scalar。
 
-        Returns:
+        Returns
+        -------
+        Self
             scalar 倍した core。
 
-        Raises:
-            TypeError: ``scalar`` が scalar でない場合。
+        Raises
+        ------
+        TypeError
+            ``scalar`` が scalar でない場合。
         """
         if not np.isscalar(scalar):
             raise TypeError("scalar must be a scalar.")
@@ -252,14 +303,20 @@ class BaseTTCore:
         broadcast に依存した要素積と異なり、右 rank 軸をスケールする
         操作であることを API として表します。
 
-        Args:
-            weights: 右 rank と同じ長さを持つ 1 次元配列。
+        Parameters
+        ----------
+        weights : np.ndarray
+            右 rank と同じ長さを持つ 1 次元配列。
 
-        Returns:
+        Returns
+        -------
+        Self
             右 rank 方向に重みを掛けた core。
 
-        Raises:
-            ValueError: ``weights`` が 1 次元でない、または長さが右 rank と一致しない場合。
+        Raises
+        ------
+        ValueError
+            ``weights`` が 1 次元でない、または長さが右 rank と一致しない場合。
         """
         weights_array = np.asarray(weights)
         if weights_array.ndim != 1:
@@ -276,10 +333,14 @@ class BaseTTCore:
         左 rank 軸と ``factor`` の列方向を縮約する線形変換です。
         要素積ではなく、左 rank を ``factor.shape[0]`` に変換します。
 
-        Args:
-            factor: 形状 ``(new_left_rank, left_rank)`` の行列。
+        Parameters
+        ----------
+        factor : np.ndarray
+            形状 ``(new_left_rank, left_rank)`` の行列。
 
-        Returns:
+        Returns
+        -------
+        Self
             左から変換を掛けた core。
         """
         return type(self)(np.tensordot(factor, self._data, axes=(1, 0)), copy=False)
@@ -290,10 +351,14 @@ class BaseTTCore:
         右 rank 軸と ``factor`` の行方向を縮約する線形変換です。
         要素積ではなく、右 rank を ``factor.shape[1]`` に変換します。
 
-        Args:
-            factor: 形状 ``(right_rank, new_right_rank)`` の行列。
+        Parameters
+        ----------
+        factor : np.ndarray
+            形状 ``(right_rank, new_right_rank)`` の行列。
 
-        Returns:
+        Returns
+        -------
+        Self
             右へ変換を掛けた core。
         """
         return type(self)(np.tensordot(self._data, factor, axes=(-1, 0)), copy=False)
@@ -312,11 +377,16 @@ class TTTensorCore(BaseTTCore):
     ) -> Self:
         """rank-one factor から TT tensor core を生成する。
 
-        Args:
-            factor: 1 次元 factor 配列。
-            dtype: core に使う dtype。省略時は入力から推定する。
+        Parameters
+        ----------
+        factor : np.ndarray
+            1 次元 factor 配列。
+        dtype : np.dtype or None, optional
+            core に使う dtype。省略時は入力から推定する。
 
-        Returns:
+        Returns
+        -------
+        Self
             形状 ``(1, factor.size, 1)`` の TT tensor core。
         """
         factor_array = np.asarray(factor, dtype=dtype).reshape(-1)
@@ -330,7 +400,9 @@ class TTTensorCore(BaseTTCore):
     def as_operator_row_core(self) -> "TTOperatorCore":
         """mode を row 側へ置いた TT operator core を返す。
 
-        Returns:
+        Returns
+        -------
+        TTOperatorCore
             形状 ``(left_rank, mode_dim, 1, right_rank)`` の core。
         """
         return TTOperatorCore(self._data[:, :, np.newaxis, :], copy=False)
@@ -338,7 +410,9 @@ class TTTensorCore(BaseTTCore):
     def as_operator_col_core(self) -> "TTOperatorCore":
         """mode を column 側へ置いた TT operator core を返す。
 
-        Returns:
+        Returns
+        -------
+        TTOperatorCore
             形状 ``(left_rank, 1, mode_dim, right_rank)`` の core。
         """
         return TTOperatorCore(self._data[:, np.newaxis, :, :], copy=False)
@@ -353,14 +427,20 @@ class TTOperatorCore(BaseTTCore):
     def from_rank_matrix(cls, matrix: np.ndarray) -> Self:
         """rank 間の小行列を row/column mode 次元 1 の operator core に変換する。
 
-        Args:
-            matrix: 形状 ``(left_rank, right_rank)`` の行列。
+        Parameters
+        ----------
+        matrix : np.ndarray
+            形状 ``(left_rank, right_rank)`` の行列。
 
-        Returns:
+        Returns
+        -------
+        Self
             形状 ``(left_rank, 1, 1, right_rank)`` の TT operator core。
 
-        Raises:
-            ValueError: ``matrix`` が 2 次元でない場合。
+        Raises
+        ------
+        ValueError
+            ``matrix`` が 2 次元でない場合。
         """
         array = np.asarray(matrix)
         if array.ndim != 2:
@@ -375,11 +455,16 @@ class TTOperatorCore(BaseTTCore):
     ) -> Self:
         """rank-one factor を row 側 operator core に変換する。
 
-        Args:
-            factor: 1 次元 factor 配列。
-            dtype: core に使う dtype。省略時は入力から推定する。
+        Parameters
+        ----------
+        factor : np.ndarray
+            1 次元 factor 配列。
+        dtype : np.dtype or None, optional
+            core に使う dtype。省略時は入力から推定する。
 
-        Returns:
+        Returns
+        -------
+        Self
             形状 ``(1, factor.size, 1, 1)`` の TT operator core。
         """
         factor_array = np.asarray(factor, dtype=dtype).reshape(-1)
@@ -393,11 +478,16 @@ class TTOperatorCore(BaseTTCore):
     ) -> Self:
         """rank-one factor を column 側 operator core に変換する。
 
-        Args:
-            factor: 1 次元 factor 配列。
-            dtype: core に使う dtype。省略時は入力から推定する。
+        Parameters
+        ----------
+        factor : np.ndarray
+            1 次元 factor 配列。
+        dtype : np.dtype or None, optional
+            core に使う dtype。省略時は入力から推定する。
 
-        Returns:
+        Returns
+        -------
+        Self
             形状 ``(1, 1, factor.size, 1)`` の TT operator core。
         """
         factor_array = np.asarray(factor, dtype=dtype).reshape(-1)

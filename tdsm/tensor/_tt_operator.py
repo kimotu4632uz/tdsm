@@ -103,12 +103,17 @@ class TTOperator(BaseTTOperator):
     def __init__(self, cores: Sequence[np.ndarray | BaseTTCore], copy: bool = True) -> None:
         """TT operator を初期化する。
 
-        Args:
-            cores: 4 次元 TT core の列。
-            copy: True の場合、core をコピーして保持する。
+        Parameters
+        ----------
+        cores : Sequence[np.ndarray | BaseTTCore]
+            4 次元 TT core の列。
+        copy : bool, default True
+            True の場合、core をコピーして保持する。
 
-        Raises:
-            ValueError: 境界 rank が 1 でない場合。
+        Raises
+        ------
+        ValueError
+            境界 rank が 1 でない場合。
         """
         super().__init__(cores, copy=copy)
         if self.ranks[0] != 1:
@@ -130,13 +135,20 @@ class TTOperator(BaseTTOperator):
     ) -> np.ndarray:
         """指定 core 順序で左から右に縮約して行列化する。
 
-        Args:
-            cores: 縮約する TT operator core の列。
-            row_dims: ``cores`` に対応する row mode 次元。
-            col_dims: ``cores`` に対応する column mode 次元。
-            ranks: ``cores`` に対応する TT rank。
+        Parameters
+        ----------
+        cores : Sequence[np.ndarray | BaseTTCore]
+            縮約する TT operator core の列。
+        row_dims : Sequence[int]
+            ``cores`` に対応する row mode 次元。
+        col_dims : Sequence[int]
+            ``cores`` に対応する column mode 次元。
+        ranks : Sequence[int]
+            ``cores`` に対応する TT rank。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             行列化した 2 次元配列。
         """
         mat = np.asarray(cores[0]).reshape(row_dims[0], col_dims[0], ranks[1]).copy()
@@ -157,7 +169,9 @@ class TTOperator(BaseTTOperator):
     def matricize_r2l(self) -> np.ndarray:
         """右から左に縮約して dense vector または dense matrix に変換する。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             row/column mode を ``(id, ..., i1)`` / ``(jd, ..., j1)`` の順に
             並べた dense vector または dense matrix。
         """
@@ -172,7 +186,9 @@ class TTOperator(BaseTTOperator):
     def matricize_l2r(self) -> np.ndarray:
         """左から右に縮約して dense vector または dense matrix に変換する。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             row/column mode を ``(i1, ..., id)`` / ``(j1, ..., jd)`` の順に
             並べた dense vector または dense matrix。
         """
@@ -186,14 +202,20 @@ class TTOperator(BaseTTOperator):
     def get_element(self, idx: Sequence[int]) -> np.generic:
         """指定 index の operator 要素を返す。
 
-        Args:
-            idx: ``[x1, ..., xd, y1, ..., yd]`` 形式の index。
+        Parameters
+        ----------
+        idx : Sequence[int]
+            ``[x1, ..., xd, y1, ..., yd]`` 形式の index。
 
-        Returns:
+        Returns
+        -------
+        np.generic
             指定された要素。
 
-        Raises:
-            ValueError: index の個数または範囲が不正な場合。
+        Raises
+        ------
+        ValueError
+            index の個数または範囲が不正な場合。
         """
         if len(idx) != (2 * self.ndim):
             raise ValueError("The number of indices must be twice the dimension.")
@@ -218,8 +240,10 @@ class TTOperator(BaseTTOperator):
     def as_scalar(self) -> np.generic:
         """全 row/column 次元が 1 の場合に scalar として返す。
 
-        Raises:
-            ValueError: dense operator が scalar でない場合。
+        Raises
+        ------
+        ValueError
+            dense operator が scalar でない場合。
         """
         if np.prod(self.row_dims) == 1 and np.prod(self.col_dims) == 1:
             return self.get_element([0] * (2 * self.ndim))

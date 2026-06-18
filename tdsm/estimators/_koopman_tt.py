@@ -29,12 +29,17 @@ class TTKoopmanOperator:
     ) -> None:
         """Koopman 作用素表現を初期化する。
 
-        Args:
-            left_chain: 出力側の TT chain。左端 rank は 1。
-            right_chain: 入力側の TT chain。左端 rank は 1。
+        Parameters
+        ----------
+        left_chain : TTChainTensor
+            出力側の TT chain。左端 rank は 1。
+        right_chain : TTChainTensor
+            入力側の TT chain。左端 rank は 1。
 
-        Raises:
-            ValueError: 境界 rank または Koopman rank が不整合な場合。
+        Raises
+        ------
+        ValueError
+            境界 rank または Koopman rank が不整合な場合。
         """
         if left_chain.ranks[0] != 1:
             raise ValueError("left_chain must have left boundary rank 1.")
@@ -97,13 +102,20 @@ class TTKoopmanOperator:
         `left_chain` を左から因子分解し、接続部で得られる因子を
         `right_chain` の右端 rank 側へ吸収します。
 
-        Args:
-            threshold: 相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
-            max_rank: 各中間 rank の最大値。
-            rank_list: 合成済み TT operator の中間 rank ごとの上限。
-            method: 局所分解に使う手法。
+        Parameters
+        ----------
+        threshold : float or None, default 0
+            相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
+        max_rank : int or None, optional
+            各中間 rank の最大値。
+        rank_list : list[int] or None, optional
+            合成済み TT operator の中間 rank ごとの上限。
+        method : {"svd", "qr"}, default "svd"
+            局所分解に使う手法。
 
-        Returns:
+        Returns
+        -------
+        Self
             左直交化した TT Koopman operator。
         """
         left_rank_list, right_rank_list = self._split_left_ortho_rank_list(rank_list)
@@ -138,13 +150,20 @@ class TTKoopmanOperator:
         `right_chain` を左から因子分解し、接続部で得られる因子を
         `left_chain` の右端 rank 側へ吸収します。
 
-        Args:
-            threshold: 相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
-            max_rank: 各中間 rank の最大値。
-            rank_list: 合成済み TT operator の中間 rank ごとの上限。
-            method: 局所分解に使う手法。
+        Parameters
+        ----------
+        threshold : float or None, default 0
+            相対特異値による打ち切り閾値。``None`` の場合は打ち切らない。
+        max_rank : int or None, optional
+            各中間 rank の最大値。
+        rank_list : list[int] or None, optional
+            合成済み TT operator の中間 rank ごとの上限。
+        method : {"svd", "qr"}, default "svd"
+            局所分解に使う手法。
 
-        Returns:
+        Returns
+        -------
+        Self
             右直交化した TT Koopman operator。
         """
         left_rank_list, right_rank_list = self._split_right_ortho_rank_list(rank_list)
@@ -216,10 +235,14 @@ class TTKoopmanOperator:
     def apply_rank_one(self, tensor: RankOneTensor) -> TTTensor:
         """rank-one 入力へ Koopman 作用素表現を作用させる。
 
-        Args:
-            tensor: 入力側辞書で lift 済みの rank-one tensor。
+        Parameters
+        ----------
+        tensor : RankOneTensor
+            入力側辞書で lift 済みの rank-one tensor。
 
-        Returns:
+        Returns
+        -------
+        TTTensor
             出力側のリフト状態を表す `TTTensor`。
         """
         coeff = inner_product(self.right_chain, tensor)[0, 0, :, 0]
@@ -238,14 +261,20 @@ class TTKoopmanOperator:
         `matricize_r2l()` と同じ column 順序で取り出します。返す行列の
         第 `i` 行が `dx_i` に対応します。
 
-        Args:
-            real: True の場合、実部だけを返す。
+        Parameters
+        ----------
+        real : bool, default True
+            True の場合、実部だけを返す。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             形状 ``(prod(col_dims), row_ndim)`` の係数行列。
 
-        Raises:
-            ValueError: 出力側 mode 次元に 1 階成分が存在しない場合。
+        Raises
+        ------
+        ValueError
+            出力側 mode 次元に 1 階成分が存在しない場合。
         """
         for mode_index, mode_dim in enumerate(self.row_dims):
             if mode_dim <= 1:
@@ -291,16 +320,22 @@ class TTKoopmanOperator:
     def get_element(self, idx: Sequence[int]) -> np.generic:
         """指定 index の Koopman operator 要素を返す。
 
-        Args:
-            idx: ``[x1, ..., xd, y1, ..., ye]`` 形式の index。
-                前半は出力側 `left_chain`、後半は入力側 `right_chain` の
-                自然な mode 順序に対応する。
+        Parameters
+        ----------
+        idx : Sequence[int]
+            ``[x1, ..., xd, y1, ..., ye]`` 形式の index。
+            前半は出力側 `left_chain`、後半は入力側 `right_chain` の
+            自然な mode 順序に対応する。
 
-        Returns:
+        Returns
+        -------
+        np.generic
             指定された要素。
 
-        Raises:
-            ValueError: index の個数または範囲が不正な場合。
+        Raises
+        ------
+        ValueError
+            index の個数または範囲が不正な場合。
         """
         row_ndim = self.left_chain.ndim
         col_ndim = self.right_chain.ndim
@@ -346,7 +381,9 @@ class TTKoopmanOperator:
     def matricize_l2r(self) -> np.ndarray:
         """自然な mode 順序で dense Koopman 行列表現を返す。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             row/column mode をそれぞれ ``(i1, ..., id)`` /
             ``(j1, ..., je)`` の順に並べた dense 行列。
         """
@@ -357,7 +394,9 @@ class TTKoopmanOperator:
     def matricize_r2l(self) -> np.ndarray:
         """自然な mode 順序で dense Koopman 行列表現を返す。
 
-        Returns:
+        Returns
+        -------
+        np.ndarray
             row/column mode をそれぞれ ``(id, ..., i1)`` /
             ``(je, ..., j1)`` の順に並べた dense 行列。
         """

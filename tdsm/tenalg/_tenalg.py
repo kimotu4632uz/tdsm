@@ -10,15 +10,22 @@ from ..tensor import TTOperator, TTTensor
 def add_tensor(tt1: TTTensor, tt2: TTTensor) -> TTTensor:
     """2 つの TT tensor の和を返す。
 
-    Args:
-        tt1: 1 つ目の TT tensor。
-        tt2: 2 つ目の TT tensor。
+    Parameters
+    ----------
+    tt1 : TTTensor
+        1 つ目の TT tensor。
+    tt2 : TTTensor
+        2 つ目の TT tensor。
 
-    Returns:
+    Returns
+    -------
+    TTTensor
         和を表す TT tensor。
 
-    Raises:
-        ValueError: mode 次元が一致しない場合。
+    Raises
+    ------
+    ValueError
+        mode 次元が一致しない場合。
     """
     if tt1.mode_dims != tt2.mode_dims:
         raise ValueError("Two TT tensors must have the same mode dimensions.")
@@ -42,15 +49,22 @@ def add_tensor(tt1: TTTensor, tt2: TTTensor) -> TTTensor:
 def add_operator(tt1: TTOperator, tt2: TTOperator) -> TTOperator:
     """2 つの TT operator の和を返す。
 
-    Args:
-        tt1: 1 つ目の TT operator。
-        tt2: 2 つ目の TT operator。
+    Parameters
+    ----------
+    tt1 : TTOperator
+        1 つ目の TT operator。
+    tt2 : TTOperator
+        2 つ目の TT operator。
 
-    Returns:
+    Returns
+    -------
+    TTOperator
         和を表す TT operator。
 
-    Raises:
-        ValueError: row 次元または column 次元が一致しない場合。
+    Raises
+    ------
+    ValueError
+        row 次元または column 次元が一致しない場合。
     """
     if tt1.row_dims != tt2.row_dims or tt1.col_dims != tt2.col_dims:
         raise ValueError("Two TT operators must have the same row and column dimensions.")
@@ -74,11 +88,16 @@ def add_operator(tt1: TTOperator, tt2: TTOperator) -> TTOperator:
 def mul_operator_core(core1: np.ndarray, core2: np.ndarray) -> np.ndarray:
     """2 つの TT operator core の積を返す。
 
-    Args:
-        core1: 左側の TT operator core。
-        core2: 右側の TT operator core。
+    Parameters
+    ----------
+    core1 : np.ndarray
+        左側の TT operator core。
+    core2 : np.ndarray
+        右側の TT operator core。
 
-    Returns:
+    Returns
+    -------
+    np.ndarray
         積を表す TT operator core。
     """
     core1 = np.asarray(core1)
@@ -103,15 +122,22 @@ def mul_operator_core(core1: np.ndarray, core2: np.ndarray) -> np.ndarray:
 def mul_operator(tt1: TTOperator, tt2: TTOperator) -> TTOperator:
     """2 つの TT operator の積を返す。
 
-    Args:
-        tt1: 左側の TT operator。
-        tt2: 右側の TT operator。
+    Parameters
+    ----------
+    tt1 : TTOperator
+        左側の TT operator。
+    tt2 : TTOperator
+        右側の TT operator。
 
-    Returns:
+    Returns
+    -------
+    TTOperator
         積を表す TT operator。
 
-    Raises:
-        ValueError: 次元数、または左 column 次元と右 row 次元が一致しない場合。
+    Raises
+    ------
+    ValueError
+        次元数、または左 column 次元と右 row 次元が一致しない場合。
     """
     if tt1.ndim != tt2.ndim:
         raise ValueError("Two TT operators must have the same dimension.")
@@ -124,15 +150,22 @@ def mul_operator(tt1: TTOperator, tt2: TTOperator) -> TTOperator:
 def apply_operator(op: TTOperator, tensor: TTTensor) -> TTTensor:
     """TT operator を TT tensor に作用させる。
 
-    Args:
-        op: 作用させる TT operator。
-        tensor: 入力 TT tensor。
+    Parameters
+    ----------
+    op : TTOperator
+        作用させる TT operator。
+    tensor : TTTensor
+        入力 TT tensor。
 
-    Returns:
+    Returns
+    -------
+    TTTensor
         ``op`` を ``tensor`` に作用させた TT tensor。
 
-    Raises:
-        ValueError: 次元数、または operator の column 次元と tensor の mode 次元が一致しない場合。
+    Raises
+    ------
+    ValueError
+        次元数、または operator の column 次元と tensor の mode 次元が一致しない場合。
     """
     if op.ndim != tensor.ndim:
         raise ValueError("TT operator and TT tensor must have the same dimension.")
