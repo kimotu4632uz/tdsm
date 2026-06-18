@@ -4,5 +4,5 @@ from ._dicts import (
     TTBuilder,
 )
 from ._estimators import (
-    Estimator,
+    TDSMBaseEstimator,
 )

@@ -5,9 +5,9 @@ from typing import Literal, Sequence
 import numpy as np
 import sympy as sp
 
-from lib.solvers.time_grid import TimeGrid
-from lib.solvers.model import BaseModel
-from lib.solvers.dual import StatsTrajectory
+from ddsm.solvers.time_grid import TimeGrid
+from ddsm.solvers.model import BaseModel
+from ddsm.solvers.dual import StatsTrajectory
 
 from ..dicts import Monomials4TT, TensorProductDictionary
 from ..tenalg import add_operator, inner_product

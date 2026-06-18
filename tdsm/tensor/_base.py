@@ -10,7 +10,7 @@ from typing import ClassVar, Literal, Self, Sequence
 
 import numpy as np
 
-from lib.common.svd_utils import trunc_svd
+from ddsm.utils.svd import trunc_svd
 
 from ._tt_core import BaseTTCore
 

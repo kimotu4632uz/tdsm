@@ -3,7 +3,7 @@ from typing import override
 
 import numpy as np
 
-from lib.common.svd_utils import trunc_svd
+from ddsm.utils.svd import trunc_svd
 
 from ..base._dicts import TensorProductDictionary, TTBuilder
 from ..tensor import TTChainTensor, TTTensor

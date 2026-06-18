@@ -12,8 +12,8 @@ import numpy as np
 import scipy.linalg as lin
 from scipy.sparse.linalg import LinearOperator, lgmres
 
-from lib.common.svd_utils import trunc_svd
-from lib.solvers.time_grid import TimeGrid
+from ddsm.utils.svd import trunc_svd
+from ddsm.solvers.time_grid import TimeGrid
 
 from ..tenalg import CachedEinsum, add_operator, apply_operator
 from ..tensor import TTOperator, TTTensor, eye, filled_tensor

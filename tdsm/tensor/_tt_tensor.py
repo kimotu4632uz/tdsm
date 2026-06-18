@@ -6,7 +6,7 @@ from typing import Self, cast
 
 import numpy as np
 
-from lib.common.svd_utils import trunc_svd
+from ddsm.utils.svd import trunc_svd
 
 from ._base import BaseTT, _combine_max_rank
 from ._tt_core import BaseTTCore, TTTensorCore

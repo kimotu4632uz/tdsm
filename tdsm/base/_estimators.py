@@ -1,37 +1,66 @@
 from __future__ import annotations
 
-from abc import ABCMeta, abstractmethod
-from typing import Self
+import abc
+from typing import Any
 
 import numpy as np
+from sklearn.base import BaseEstimator, RegressorMixin
 
 
-class Estimator(object, metaclass=ABCMeta):
+class TDSMBaseEstimator(abc.ABC, RegressorMixin, BaseEstimator):
+    """
+    Abstract base estimator for Data-Driven Sparse Modeling (DDSM).
+    """
+
     def __init__(self) -> None:
-        """Initialize the estimator."""
-        super(Estimator, self).__init__()
+        """Initialize the TDBaseEstimator instance."""
+        super(TDSMBaseEstimator, self).__init__()
 
-    @abstractmethod
-    def fit(self, x: np.ndarray, y: np.ndarray) -> Self:
-        """Fit the estimator to training data.
+    @abc.abstractmethod
+    def fit(self, X: np.ndarray, y: np.ndarray) -> TDSMBaseEstimator:
+        """
+        Fit the model according to the given training data.
 
-        Args:
-            x: Input features used for training.
-            y: Target values used for training.
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training vectors.
+        y : ndarray of shape (n_samples, n_targets)
+            Target values.
 
-        Returns:
+        Returns
+        -------
+        DDSMBaseEstimator
             The fitted estimator.
         """
-        ...
+        pass
 
-    @abstractmethod
-    def predict(self, x: np.ndarray) -> np.ndarray:
-        """Predict outputs for the given input data.
+    @abc.abstractmethod
+    def predict(self, X: np.ndarray) -> np.ndarray:
+        """
+        Predict regression targets for X.
 
-        Args:
-            x: Input features to predict on.
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Input samples.
 
-        Returns:
+        Returns
+        -------
+        ndarray of shape (n_samples, n_targets)
             Predicted values.
         """
-        ...
+        pass
+
+    def __sklearn_tags__(self) -> dict[str, Any]:
+        """
+        Specify Scikit-learn estimator tags.
+
+        Returns
+        -------
+        dict
+            Dictionary of boolean tags.
+        """
+        tags = super(TDSMBaseEstimator, self).__sklearn_tags__()
+        tags.target_tags.multi_output = True
+        return tags

@@ -3,16 +3,15 @@
 from typing import Self
 
 import numpy as np
+from ddsm.utils.svd import truncated_pinv_values
 
-from lib.common.svd_utils import truncated_pinv_values
-
-from ..base import Estimator
+from ..base import TDSMBaseEstimator
 from ..dicts import SVDTTBuilder, TensorProductDictionary
 from ..tensor import TTChainTensor, TTTensor
-from .koopman_tt import TTKoopmanOperator
+from ._koopman_tt import TTKoopmanOperator
 
 
-class TTEDMD(Estimator):
+class TTEDMD(TDSMBaseEstimator):
     """TT-EDMD によって Koopman 作用素を推定する推定器。
 
     スナップショット対から lifted observable 空間上の Koopman 作用素を
