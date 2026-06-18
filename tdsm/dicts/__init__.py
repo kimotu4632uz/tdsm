@@ -5,5 +5,5 @@ from ._builder import (
     SVDTTBuilder,
 )
 from ._core_dicts import (
-    Monomials4TT,
+    MonomialsCoreDict,
 )

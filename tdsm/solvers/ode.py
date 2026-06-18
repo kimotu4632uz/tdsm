@@ -10,10 +10,9 @@ from typing import Literal
 
 import numpy as np
 import scipy.linalg as lin
-from scipy.sparse.linalg import LinearOperator, lgmres
-
-from ddsm.utils.svd import trunc_svd
 from ddsm.solvers.time_grid import TimeGrid
+from ddsm.utils.svd import trunc_svd
+from scipy.sparse.linalg import LinearOperator, lgmres
 
 from ..tenalg import CachedEinsum, add_operator, apply_operator
 from ..tensor import TTOperator, TTTensor, eye, filled_tensor
@@ -92,8 +91,6 @@ class CrankNicolson:
         sol = filled_tensor(1, op.col_dims, ranks=op.ranks)
         sol = sol.right_ortho()
         states: list[TTTensor] = []
-        if time_grid.save_initial:
-            states.append(pre_sol.copy())
 
         solver: 'ALS | MALS'
         if self.solver_type == 'mals':

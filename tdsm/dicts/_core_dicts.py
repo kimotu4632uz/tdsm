@@ -9,7 +9,7 @@ from sklearn.utils.validation import check_array
 from ..base._dicts import BaseCoreDict
 
 
-class Monomials4TT(BaseCoreDict):
+class MonomialsCoreDict(BaseCoreDict):
     """TT 用の単項式辞書。"""
 
     degree: int

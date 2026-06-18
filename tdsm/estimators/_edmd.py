@@ -7,7 +7,7 @@ from ddsm.utils.svd import truncated_pinv_values
 from sklearn.utils.validation import check_is_fitted, validate_data
 
 from ..base import TDSMBaseEstimator
-from ..dicts import Monomials4TT, SVDTTBuilder, TensorProductDict
+from ..dicts import MonomialsCoreDict, SVDTTBuilder, TensorProductDict
 from ..tensor import TTChainTensor, TTTensor
 from ._koopman_tt import TTKoopmanOperator
 
@@ -76,7 +76,7 @@ class TTEDMD(TDSMBaseEstimator):
         kwargs = (
             psi_kwargs
             if psi_kwargs is not None
-            else {"core_dicts": Monomials4TT(degree=2)}
+            else {"core_dicts": MonomialsCoreDict(degree=2)}
         )
         return psi_cls(**kwargs)
 

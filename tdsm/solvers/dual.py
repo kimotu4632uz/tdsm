@@ -1,18 +1,64 @@
 """TT 形式で双対方程式を解く solver を提供する。"""
 
+from dataclasses import dataclass
 from typing import Literal, Sequence
 
 import numpy as np
 import sympy as sp
-from ddsm.solvers.dual import StatsTrajectory
 from ddsm.solvers.model import BaseModel
 from ddsm.solvers.time_grid import TimeGrid
 
-from ..dicts import Monomials4TT, TensorProductDict
+from ..dicts import MonomialsCoreDict, TensorProductDict
 from ..tenalg import add_operator, inner_product
 from ..tensor import TTOperator, TTTensor, filled_tensor
 from .ode import CrankNicolson, LinearSolverOptions
 
+
+@dataclass(slots=True, eq=False)
+class TTStatsTrajectory:
+    """時刻ごとの統計量と内部状態列を表す。
+
+    Attributes
+    ----------
+    time_grid : TimeGrid
+        時間グリッド。
+    values : np.ndarray
+        観測時刻ごとの統計量。
+    states : Sequence[TTTensor]
+        観測時刻ごとの内部状態列。
+
+    Raises
+    ------
+    ValueError
+        統計量または状態列の形状が不正な場合。
+    """
+
+    time_grid: TimeGrid
+    values: np.ndarray
+    states: Sequence[TTTensor]
+
+    def __post_init__(self) -> None:
+        """統計量と内部状態列の形状を検証する。
+
+        Raises
+        ------
+        ValueError
+            統計量または状態列の長さが観測時刻列と一致しない場合。
+        """
+        self.values = np.asarray(self.values).copy()
+        self.states = tuple(value.copy() for value in self.states)
+
+        if self.values.ndim != 1:
+            raise ValueError("stats must be a 1D array")
+        if self.values.shape[0] != len(self.time_grid.obs_times):
+            raise ValueError("values length must match len(time_grid.obs_times)")
+        if len(self.states) != len(self.time_grid.obs_times):
+            raise ValueError("states length must match len(time_grid.obs_times)")
+
+    @property
+    def obs_times(self) -> np.ndarray:
+        """観測時刻列。"""
+        return self.time_grid.obs_times
 
 def create_generator(model: BaseModel, degree: int) -> TTOperator:
     """SDE モデルの Koopman 生成子を TT operator として構築する。
@@ -78,7 +124,7 @@ class TTDual:
     tt_rank: int
     threshold: float | None
     method: Literal['als', 'mals']
-    _core_psi: Monomials4TT
+    _core_psi: MonomialsCoreDict
 
     def __init__(
         self,
@@ -100,7 +146,7 @@ class TTDual:
         self.tt_rank = tt_rank
         self.threshold = threshold
         self.method = method
-        self._core_psi = Monomials4TT(degree=degree)
+        self._core_psi = MonomialsCoreDict(degree=degree)
 
     def _calc_stat(self, tt: TTTensor, x0: np.ndarray) -> float:
         """初期点で評価した TT tensor の期待値を計算する。
@@ -157,7 +203,7 @@ class TTDual:
         return states
 
 
-    def solve(self, *, model: BaseModel, x0: np.ndarray, time_grid: TimeGrid, comp_index: list[int]) -> StatsTrajectory[TTTensor]:
+    def solve(self, *, model: BaseModel, x0: np.ndarray, time_grid: TimeGrid, comp_index: list[int]) -> TTStatsTrajectory:
         """双対方程式を解き、観測時刻ごとの統計量と状態を返す。
 
         Args:
@@ -171,4 +217,4 @@ class TTDual:
         p_list = self.solve_ode(model=model, time_grid=time_grid, comp_index=comp_index)
         stats = [self._calc_stat(p, x0) for p in p_list]
 
-        return StatsTrajectory(time_grid=time_grid, stats=np.asarray(stats), states=p_list)
+        return TTStatsTrajectory(time_grid=time_grid, values=np.asarray(stats), states=p_list)
