@@ -180,32 +180,14 @@ wheels = [
 
 [[package]]
 name = "ddsm"
-source = { editable = "." }
+version = "0.1.dev42+g6f5c36a1d"
+source = { git = "https://github.com/kimotu4632uz/ddsm.git?rev=6f5c36a1d481c4d0353185ede86332b2291a11f4#6f5c36a1d481c4d0353185ede86332b2291a11f4" }
 dependencies = [
     { name = "numpy" },
     { name = "scikit-learn" },
     { name = "scipy" },
     { name = "sympy" },
 ]
-
-[package.optional-dependencies]
-dev = [
-    { name = "ipykernel" },
-    { name = "matplotlib" },
-    { name = "seaborn" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "ipykernel", marker = "extra == 'dev'" },
-    { name = "matplotlib", marker = "extra == 'dev'" },
-    { name = "numpy" },
-    { name = "scikit-learn" },
-    { name = "scipy" },
-    { name = "seaborn", marker = "extra == 'dev'" },
-    { name = "sympy" },
-]
-provides-extras = ["dev", "test"]
 
 [[package]]
 name = "debugpy"
@@ -634,6 +616,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/9c/50/0753655aa844c99cd9e018aacf76f130f1bd81d881bb74bc0aef5d73a8ba/numpy-2.4.6-cp314-cp314t-win32.whl", hash = "sha256:260a5d70215b61ab4fadf5c7baacd64821842975eea312125ed3c39a6391b063", size = 6156982, upload-time = "2026-05-18T23:36:40.817Z" },
     { url = "https://files.pythonhosted.org/packages/b2/d4/7c67becf668f973cb490cec3e98dfd799d866f9c989a54d355672cfa0db6/numpy-2.4.6-cp314-cp314t-win_amd64.whl", hash = "sha256:81a1cca95ed5bb92aa8b10dd2cdc9a0d3853a50fad926c28b5d7e8ea54389627", size = 12638908, upload-time = "2026-05-18T23:36:43.996Z" },
     { url = "https://files.pythonhosted.org/packages/43/bb/e1c71a4295b1b1d1393d50dbb4f2a36283c6859d9d3892e84f00ec5a91d5/numpy-2.4.6-cp314-cp314t-win_arm64.whl", hash = "sha256:0c9136e14ed34a9e343a31c533d78a9813a69a3148332bce5e9821cb2f996e66", size = 10565867, upload-time = "2026-05-18T23:36:47.114Z" },
+]
+
+[[package]]
+name = "opt-einsum"
+version = "3.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/b9/2ac072041e899a52f20cf9510850ff58295003aa75525e58343591b0cbfb/opt_einsum-3.4.0.tar.gz", hash = "sha256:96ca72f1b886d148241348783498194c577fa30a8faac108586b14f1ba4473ac", size = 63004, upload-time = "2024-09-26T14:33:24.483Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/23/cd/066e86230ae37ed0be70aae89aabf03ca8d9f39c8aea0dec8029455b5540/opt_einsum-3.4.0-py3-none-any.whl", hash = "sha256:69bb92469f86a1565195ece4ac0323943e83477171b91d24c35afe028a90d7cd", size = 71932, upload-time = "2024-09-26T14:33:23.039Z" },
 ]
 
 [[package]]
@@ -1084,6 +1075,39 @@ sdist = { url = "https://files.pythonhosted.org/packages/83/d3/803453b36afefb7c2
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a2/09/77d55d46fd61b4a135c444fc97158ef34a095e5681d0a6c10b75bf356191/sympy-1.14.0-py3-none-any.whl", hash = "sha256:e091cc3e99d2141a0ba2847328f5479b05d94a6635cb96148ccb3f34671bd8f5", size = 6299353, upload-time = "2025-04-27T18:04:59.103Z" },
 ]
+
+[[package]]
+name = "tdsm"
+source = { editable = "." }
+dependencies = [
+    { name = "ddsm" },
+    { name = "numpy" },
+    { name = "opt-einsum" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "sympy" },
+]
+
+[package.optional-dependencies]
+dev = [
+    { name = "ipykernel" },
+    { name = "matplotlib" },
+    { name = "seaborn" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ddsm", git = "https://github.com/kimotu4632uz/ddsm.git?rev=6f5c36a1d481c4d0353185ede86332b2291a11f4" },
+    { name = "ipykernel", marker = "extra == 'dev'" },
+    { name = "matplotlib", marker = "extra == 'dev'" },
+    { name = "numpy" },
+    { name = "opt-einsum" },
+    { name = "scikit-learn" },
+    { name = "scipy" },
+    { name = "seaborn", marker = "extra == 'dev'" },
+    { name = "sympy" },
+]
+provides-extras = ["dev", "test"]
 
 [[package]]
 name = "threadpoolctl"

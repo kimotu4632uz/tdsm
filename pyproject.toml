@@ -13,7 +13,6 @@ authors = [
 ]
 license = {text = "MIT"}
 dependencies = [
-    "ddsm",
     "ddsm @ git+https://github.com/kimotu4632uz/ddsm.git@6f5c36a1d481c4d0353185ede86332b2291a11f4",
     "numpy",
     "sympy",
